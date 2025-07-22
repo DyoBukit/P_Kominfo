@@ -1,19 +1,19 @@
 // src/pages/User/DashboardUser.jsx
 import React from 'react';
-import { HiClipboardList } from 'react-icons/hi'; // Ikon tema evaluasi
+import { HiClipboardList } from 'react-icons/hi';
 import Navbar from '../../components/Navbar';
-import { useAuthUser } from '../../contexts/AuthLoginUser';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext'; 
 
 function DashboardUser() {
-  const { user } = useAuthUser();
+  const { user } = useAuth(); 
 
   return (
     <div className="py-6 min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black flex flex-col">
       <Navbar role="user" />
       <main className="flex-grow p-8 md:p-12 max-w-3xl mx-auto w-full text-center text-white">
         {/* Sapaan */}
-        <h1 className="text-4xl md:text-5xl font-bold mb-6">
+        <h1 className="py-4 text-4xl md:text-5xl font-bold mb-6">
           Halo, <span className="text-primary">{user?.username || 'User'}</span> 👋
         </h1>
 

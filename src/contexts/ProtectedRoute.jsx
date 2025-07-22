@@ -1,32 +1,32 @@
 // src/components/ProtectedRoute.jsx
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from './AuthLoginAdmin';
-import { useAuthUser } from './AuthLoginUser';
+import { useAuth } from '../contexts/AuthContext'; // <--- DIUBAH: Import dari AuthContext yang digabung
 
 const ProtectedRoute = ({ allowedRoles }) => {
-  const { isAuthenticated: isAdminAuthenticated, role: adminRole } = useAuth();
-  const { isAuthenticated: isUserAuthenticated, role: userRole } = useAuthUser();
-
-  let isAuthenticated = false;
-  let currentUserRole = null;
-
-  if (isAdminAuthenticated && adminRole === 'admin') {
-    isAuthenticated = true;
-    currentUserRole = 'admin';
-  } else if (isUserAuthenticated && userRole === 'user') {
-    isAuthenticated = true;
-    currentUserRole = 'user';
-  }
+  // Ambil isAuthenticated dan role langsung dari satu AuthContext
+  const { isAuthenticated, role: currentUserRole } = useAuth(); 
 
   if (!isAuthenticated) {
+    // Jika tidak terautentikasi sama sekali, arahkan ke halaman login
     return <Navigate to="/login" replace />;
   }
 
+  // Jika terautentikasi tapi peran tidak diizinkan untuk route ini
   if (allowedRoles && !allowedRoles.includes(currentUserRole)) {
-    return <Navigate to={`/${currentUserRole}/dashboard`} replace />;
+    // Anda bisa mengarahkan ke halaman "unauthorized" atau dashboard yang sesuai
+    // Jika role-nya admin, arahkan ke dashboard admin
+    // Jika role-nya user, arahkan ke dashboard user
+    if (currentUserRole === 'admin') {
+      return <Navigate to="/admin/dashboard" replace />;
+    } else if (currentUserRole === 'user') {
+      return <Navigate to="/user/dashboard" replace />;
+    }
+    // Fallback jika role tidak dikenali atau halaman unauthorized khusus
+    return <Navigate to="/unauthorized" replace />; // Anda bisa membuat halaman unauthorized ini
   }
 
+  // Jika terautentikasi dan peran diizinkan, lanjutkan ke halaman yang diminta
   return <Outlet />;
 };
 

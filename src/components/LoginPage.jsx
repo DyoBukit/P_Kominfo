@@ -3,16 +3,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import InputField from './InputField';
 import ErrorMessage from './ErrorMessage';
-import { useAuth } from '../contexts/AuthLoginAdmin';
-import { useAuthUser } from '../contexts/AuthLoginUser';
+import { useAuth } from '../contexts/AuthContext'; 
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login: adminLogin } = useAuth();
-  const { login: userLogin } = useAuthUser();
+  const { login } = useAuth(); 
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -27,20 +25,20 @@ function LoginPage() {
     }
 
     try {
-      if (username.toLowerCase() === 'admin') {
-        const success = await adminLogin(username, password);
-        if (success) {
+      const selectedRole = username.toLowerCase() === 'admin' ? 'admin' : 'user';
+      console.log(`LoginPage: Mencoba login untuk peran: ${selectedRole}, username: '${username}', password: '${password}'`);
+      
+      const success = await login(username, password, selectedRole); 
+      console.log(`LoginPage: Fungsi login mengembalikan success: ${success}`);
+
+      if (success) {
+        if (selectedRole === 'admin') {
           navigate('/admin/dashboard');
-        } else {
-          setError('Invalid admin credentials.');
+        } else { // selectedRole === 'user'
+          navigate('/user/dashboard');
         }
       } else {
-        const success = await userLogin(username, password);
-        if (success) {
-          navigate('/user/dashboard');
-        } else {
-          setError('Invalid user credentials.');
-        }
+        setError('Kredensial tidak valid.'); 
       }
     } catch (err) {
       setError('An error occurred during login. Please try again.');
@@ -55,7 +53,6 @@ function LoginPage() {
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 sm:p-10 md:p-12 rounded-xl shadow-2xl text-center w-full max-w-md animate-fade-in"
-        // Keyframe fade-in bisa didefinisikan di global CSS (index.css) atau sebagai utility khusus di tailwind.config.js
       >
         <h2 className="text-primary text-4xl font-bold mb-8">Login</h2>
         <InputField

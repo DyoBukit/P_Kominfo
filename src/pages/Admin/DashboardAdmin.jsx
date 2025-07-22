@@ -1,20 +1,20 @@
 // src/pages/Admin/DashboardAdmin.jsx
 import React from 'react';
 import Navbar from '../../components/Navbar';
-import { useAuth } from '../../contexts/AuthLoginAdmin';
+import { useAuth } from '../../contexts/AuthContext'; // <--- PASTIKAN INI IMPORT DARI AUTHCONTEXT YANG DIGABUNG
 import { Link } from 'react-router-dom';
 
 // Jika Anda ingin menggunakan ikon, instal react-icons: npm install react-icons
 // import { FaUsers, FaClipboardList } from 'react-icons/fa';
 
 function DashboardAdmin() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <div className="py-6 min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black flex flex-col">
-      <Navbar role="admin" />
+      <Navbar role="admin" /> {/* Navbar tetap menerima role sebagai prop */}
       <main className="flex-grow p-8 md:p-12 max-w-6xl mx-auto w-full">
-        <h1 className="text-4xl md:text-5xl py- font-bold text-white mb-10 text-center">
+        <h1 className="py-4 text-4xl md:text-5xl py- font-bold text-white mb-10 text-center">
           Welcome, <span className="text-primary">{user?.username || 'Admin'}</span>!
         </h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

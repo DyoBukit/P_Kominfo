@@ -23,7 +23,7 @@ function FormEvaluasiPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black flex flex-col py-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-900 to-black flex flex-col py-10">
       <Navbar role="user" />
       <main className="flex-grow p-8 md:p-12 max-w-4xl mx-auto w-full">
         {isSubmitting ? (

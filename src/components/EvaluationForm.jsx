@@ -3,24 +3,29 @@ import React, { useState } from 'react';
 import InputField from './InputField';
 import ErrorMessage from './ErrorMessage';
 import { FiPaperclip } from 'react-icons/fi';
+// Import useNavigate untuk bisa kembali ke halaman sebelumnya
+import { useNavigate } from 'react-router-dom'; 
 
 import logo from '../assets/logoform.jpg'; 
 
-function EvaluationForm({ onSubmit }) {
+// Component menerima prop 'onSubmit' dan 'onBack'
+function EvaluationForm({ onSubmit, onBack }) { 
+  const navigate = useNavigate(); 
+
   const [formData, setFormData] = useState({
     opd: '',
     petugas: '',
     adaLayananBaru: '',
     penjelasan: '',
-    file: null,
+    file: null, 
   });
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (files) {
-      setFormData({ ...formData, [name]: files });
-    } else {
+    if (files) { 
+      setFormData({ ...formData, [name]: files }); 
+    } else { 
       setFormData({ ...formData, [name]: value });
     }
     if (errors[name]) {
@@ -33,8 +38,14 @@ function EvaluationForm({ onSubmit }) {
     const requiredFields = ['opd', 'petugas', 'adaLayananBaru', 'file', 'penjelasan'];
 
     requiredFields.forEach((field) => {
-      if (!formData[field] || (Array.isArray(formData[field]) && formData[field].length === 0)) {
-        newErrors[field] = 'Kolom ini wajib diisi.';
+      if (field === 'file') {
+        if (!formData.file || formData.file.length === 0) {
+          newErrors[field] = 'Kolom ini wajib diisi.';
+        }
+      } else {
+        if (!formData[field] || (Array.isArray(formData[field]) && formData[field].length === 0)) {
+          newErrors[field] = 'Kolom ini wajib diisi.';
+        }
       }
     });
 
@@ -50,6 +61,15 @@ function EvaluationForm({ onSubmit }) {
     }
   };
 
+  // Fungsi internal untuk tombol kembali jika onBack tidak diberikan
+  const handleGoBackInternal = () => {
+    if (onBack) {
+      onBack(); 
+    } else {
+      navigate(-1); 
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto bg-white p-6 md:p-10 shadow-lg rounded-xl">
       {/* Header */}
@@ -59,7 +79,7 @@ function EvaluationForm({ onSubmit }) {
         </h1>
         <p className="text-gray-500 text-sm italic font-semibold">Formulir Upload Data Dukung Evaluasi Mandiri SPBE Tahun 2023</p>
         <img
-          src= {logo}
+          src={logo}
           alt="Header SPBE"
           className="mt-4 rounded-lg"
         />
@@ -137,25 +157,36 @@ function EvaluationForm({ onSubmit }) {
           <input
             type="file"
             id="fileUpload"
-            onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
+            name="file" 
+            onChange={handleChange} 
+            multiple 
             className="hidden"
           />
 
           <label
             htmlFor="fileUpload"
             className="inline-flex items-center gap-2 bg-blue-600 text-white py-2 px-4 rounded-md cursor-pointer hover:bg-blue-700 transition"
-            >
-              <FiPaperclip className="text-lg" />
-              Tambahkan File
-            </label>
+          >
+            <FiPaperclip className="text-lg" />
+            Tambahkan File
+          </label>
 
-            {formData.file && (
-              <p className="mt-2 text-sm text-gray-600">
-                File terpilih: <span className="font-medium">{formData.file.name}</span>
-              </p>
-            )}
+          {formData.file && formData.file.length > 0 && (
+            <div className="mt-2 text-sm text-gray-600">
+              <p className="font-medium">File terpilih:</p>
+              <ul className="list-disc list-inside ml-4">
+                {Array.from(formData.file).map((fileItem, index) => (
+                  <li key={index}>{fileItem.name}</li>
+                ))}
+              </ul>
+              <small className="text-gray-500">Total {formData.file.length} file dipilih.</small>
+            </div>
+          )}
+          {(!formData.file || formData.file.length === 0) && (
+              <small className="mt-2 text-sm text-gray-500">Upload maksimal 10 file, max 100 MB per file.</small>
+          )}
 
-            {errors.file && <ErrorMessage message={errors.file} />}
+          {errors.file && <ErrorMessage message={errors.file} />}
         </div>
 
         {/* Penjelasan */}
@@ -173,13 +204,24 @@ function EvaluationForm({ onSubmit }) {
           {errors.penjelasan && <ErrorMessage message={errors.penjelasan} />}
         </div>
 
-        {/* Tombol Kirim */}
-        <button
-          type="submit"
-          className="bg-blue-700 text-white font-semibold py-3 px-6 rounded-md hover:bg-blue-800 transition"
-        >
-          Kirim
-        </button>
+        {/* >>>>>> PERBAIKAN: Tombol Kirim dan Kembali dalam satu div flex <<<<<< */}
+        <div className="flex justify-start items-center gap-4 mt-6"> {/* Menggunakan flexbox untuk menata */}
+          {/* Tombol Kirim */}
+          <button
+            type="submit"
+            className="bg-blue-700 text-white font-semibold py-3 px-6 rounded-md hover:bg-blue-800 transition"
+          >
+            Kirim
+          </button>
+          {/* Tombol Kembali */}
+          <button
+            type="button" // <--- Penting: type="button" agar tidak submit form
+            onClick={handleGoBackInternal}
+            className="bg-black text-white px-6 py-3 rounded-md hover:bg-blue-200 transition duration-300 font-semibold" // Gaya yang mirip teks/link tombol di gambar
+          >
+            Kembali
+          </button>
+        </div>
       </form>
     </div>
   );
