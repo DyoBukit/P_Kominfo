@@ -1,17 +1,17 @@
-// src/components/LoginPage.jsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useContext } from 'react';
+import { Navigate } from 'react-router-dom'; // Ganti useNavigate dengan Navigate
+import { useAuth } from '../contexts/AuthContext';
 import InputField from './InputField';
 import ErrorMessage from './ErrorMessage';
-import { useAuth } from '../contexts/AuthContext'; 
 
 function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
-  const { login } = useAuth(); 
   const [loading, setLoading] = useState(false);
+  
+  // Ambil juga state isAuthenticated dan user dari context
+  const { login, isAuthenticated, user } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,35 +19,40 @@ function LoginPage() {
     setLoading(true);
 
     if (!username || !password) {
-      setError('Username and password are required.');
+      setError('Username dan password harus diisi.');
       setLoading(false);
       return;
     }
 
-    try {
-      const selectedRole = username.toLowerCase() === 'admin' ? 'admin' : 'user';
-      console.log(`LoginPage: Mencoba login untuk peran: ${selectedRole}, username: '${username}', password: '${password}'`);
-      
-      const success = await login(username, password, selectedRole); 
-      console.log(`LoginPage: Fungsi login mengembalikan success: ${success}`);
+    const selectedRole = username.toLowerCase() === 'admin' ? 'admin' : 'user';
 
-      if (success) {
-        if (selectedRole === 'admin') {
-          navigate('/admin/dashboard');
-        } else { // selectedRole === 'user'
-          navigate('/user/dashboard');
-        }
-      } else {
-        setError('Kredensial tidak valid.'); 
-      }
+    try {
+      // Cukup panggil login, jangan navigasi di sini
+      await login({ username, password }, selectedRole);
+      // Biarkan komponen me-render ulang untuk melakukan navigasi
     } catch (err) {
-      setError('An error occurred during login. Please try again.');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Terjadi kesalahan saat login. Silakan coba lagi.');
+      }
       console.error('Login error:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  // --- LOGIKA BARU UNTUK NAVIGASI ---
+  // Jika state isAuthenticated sudah true (setelah login berhasil),
+  // maka komponen ini akan me-render ulang dan menjalankan blok ini.
+  if (isAuthenticated) {
+    // Tentukan tujuan berdasarkan peran dari user yang sudah ada di context
+    const targetDashboard = user?.role === 'admin' ? '/admin/dashboard' : '/user/dashboard';
+    // Gunakan komponen Navigate untuk mengarahkan pengguna
+    return <Navigate to={targetDashboard} replace />;
+  }
+
+  // Jika belum login, tampilkan form seperti biasa
   return (
     <div className="flex items-center justify-center min-h-screen bg-black p-6">
       <form
@@ -72,11 +77,12 @@ function LoginPage() {
           placeholder="Enter your password"
         />
         {error && <ErrorMessage message={error} />}
-        <button disabled={loading}
+        <button
+          disabled={loading}
           type="submit"
-          className="bg-black text-white cursor-pointer w-full py-3 px-6 mt-6 rounded-lg text-xl font-semibold hover:bg-secondary transition-all duration-300"
+          className="bg-black text-white cursor-pointer w-full py-3 px-6 mt-6 rounded-lg text-xl font-semibold hover:bg-gray-800 transition-all duration-300 disabled:opacity-50"
         >
-          Login
+          {loading ? 'Logging in...' : 'Login'}
         </button>
         <p className="mt-4 text-sm text-gray-600">Aplikasi Form Evaluasi - Diskominfo</p>
       </form>

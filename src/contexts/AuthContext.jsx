@@ -1,108 +1,105 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import api from '../utils/Api'; 
 
-const AuthContext = createContext(null);
-
-const ADMIN_USERNAME = import.meta.env.VITE_ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
-const USER_USERNAME = import.meta.env.VITE_USER_USERNAME || 'user'; // PASTIKAN NILAI INI
-const USER_PASSWORD = import.meta.env.VITE_USER_PASSWORD || 'user123'; // PASTIKAN NILAI INI
+// Hanya perlu satu deklarasi Context
+export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null);
+  const [token, setToken] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // useEffect untuk memuat status autentikasi dari localStorage saat aplikasi pertama kali dimuat
   useEffect(() => {
-    console.log('AuthContext useEffect: Memuat dari localStorage...');
-    try {
-      const storedAdminAuth = localStorage.getItem('adminAuth');
-      const storedUserAuth = localStorage.getItem('userAuth');
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
 
-      if (storedAdminAuth) {
-        const { isAuthenticated: authStatus, user: storedUser, role: storedRole } = JSON.parse(storedAdminAuth);
-        if (authStatus && storedRole === 'admin') {
-          setIsAuthenticated(authStatus);
-          setUser(storedUser);
-          setRole(storedRole);
-          console.log('AuthContext useEffect: Admin terautentikasi ditemukan:', storedUser);
-          return;
-        }
-      }
-
-      if (storedUserAuth) {
-        const { isAuthenticated: authStatus, user: storedUser, role: storedRole } = JSON.parse(storedUserAuth);
-        if (authStatus && storedRole === 'user') {
-          setIsAuthenticated(authStatus);
-          setUser(storedUser);
-          setRole(storedRole);
-          console.log('AuthContext useEffect: User terautentikasi ditemukan:', storedUser);
-        }
-      }
-    } catch (error) {
-      console.error('AuthContext useEffect: Gagal memuat data autentikasi dari localStorage', error);
-      localStorage.removeItem('adminAuth');
-      localStorage.removeItem('userAuth');
+    if (storedToken && storedUser) {
+      const userObject = JSON.parse(storedUser);
+      // Set state dari data yang tersimpan
+      setToken(storedToken);
+      setUser(userObject);
+      setIsAuthenticated(true);
+      
+      // Atur header Authorization default untuk semua request Axios selanjutnya
+      api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+      console.log('AuthContext: Sesi ditemukan dari localStorage untuk user:', userObject.username);
     }
   }, []);
 
-  const login = async (username, password, selectedRole) => {
-    console.log(`Login attempt: user='${username}', pass='${password}', role='${selectedRole}'`);
-    let success = false;
-    let userData = null;
+  // Fungsi login yang memanggil backend
+  const login = async (credentials, role) => {
+    // Tentukan endpoint API berdasarkan peran yang dipilih saat login
+    const endpoint = role === 'admin' ? '/admin/login' : '/login';
+    
+    try {
+      console.log(`Mencoba login ke endpoint: ${endpoint}`);
+      const response = await api.post(endpoint, credentials);
 
-    if (selectedRole === 'admin') {
-      console.log(`Admin check (comparing with ADMIN_USERNAME/PASSWORD): ${username === ADMIN_USERNAME && password === ADMIN_PASSWORD}`);
-      console.log(`Expected Admin: Username: '${ADMIN_USERNAME}', Password: '${ADMIN_PASSWORD}'`);
-      if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        userData = { username, role: 'admin' };
-        success = true;
-      }
-    } else if (selectedRole === 'user') {
-      // --- PERBAIKAN DI SINI ---
-      console.log(`User check (comparing with USER_USERNAME/PASSWORD): ${username === USER_USERNAME && password === USER_PASSWORD}`);
-      console.log(`Expected User: Username: '${USER_USERNAME}', Password: '${USER_PASSWORD}'`); // <--- BARIS INI DIPERBAIKI
-      if (username === USER_USERNAME && password === USER_PASSWORD) {
-        userData = { username, role: 'user' };
-        success = true;
-      }
-    }
+      // Jika berhasil, backend akan mengembalikan token dan data user (termasuk peran)
+      const { access_token, user: userData } = response.data;
 
-    if (success) {
-      setIsAuthenticated(true);
+      // Simpan token dan data user ke localStorage
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      // Perbarui state aplikasi
+      setToken(access_token);
       setUser(userData);
-      setRole(selectedRole);
-      console.log('Login SUKSES! State:', { isAuthenticated: true, user: userData, role: selectedRole });
+      setIsAuthenticated(true);
 
-      if (selectedRole === 'admin') {
-        localStorage.setItem('adminAuth', JSON.stringify({ isAuthenticated: true, user: userData, role: 'admin' }));
-        localStorage.removeItem('userAuth');
-        console.log('localStorage: adminAuth disimpan, userAuth dihapus.');
-      } else if (selectedRole === 'user') {
-        localStorage.setItem('userAuth', JSON.stringify({ isAuthenticated: true, user: userData, role: 'user' }));
-        localStorage.removeItem('adminAuth');
-        console.log('localStorage: userAuth disimpan, adminAuth dihapus.');
-      }
-      return true;
+      // Atur header Authorization default untuk semua request Axios selanjutnya
+      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+
+      console.log(`Login berhasil sebagai ${userData.role}:`, userData);
+
+    } catch (error) {
+      console.error(`Login gagal untuk peran ${role}:`, error.response ? error.response.data : error.message);
+      // Lempar error lagi agar bisa ditangani di komponen LoginPage (misal: menampilkan pesan error)
+      throw error;
     }
-    console.log('Login GAGAL!');
-    return false;
   };
 
-  const logout = () => {
-    console.log('Logging out...');
-    setIsAuthenticated(false);
-    setUser(null);
-    setRole(null);
-    localStorage.removeItem('adminAuth');
-    localStorage.removeItem('userAuth');
-    console.log('Logout berhasil, localStorage dibersihkan.');
+  // Fungsi logout
+  const logout = async () => {
+    // Tentukan endpoint logout berdasarkan peran user yang sedang login
+    const endpoint = user?.role === 'admin' ? '/admin/logout' : '/logout';
+    
+    try {
+      // Panggil API untuk membatalkan token di server (best practice)
+      await api.post(endpoint);
+      console.log('Token berhasil dibatalkan di server.');
+    } catch (error) {
+      console.error("Panggilan API logout gagal, tetap melanjutkan logout di sisi klien:", error);
+    } finally {
+      // Selalu bersihkan data di sisi klien, bahkan jika panggilan API gagal
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      setToken(null);
+      setUser(null);
+      setIsAuthenticated(false);
+
+      delete api.defaults.headers.common['Authorization'];
+      console.log('Logout berhasil, sesi klien dibersihkan.');
+    }
+  };
+
+  // Nilai yang akan disediakan oleh Context Provider
+  const value = {
+    isAuthenticated,
+    user, // Objek user berisi semua data, termasuk user.name, user.email, dan user.role
+    login,
+
+    logout,
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, role, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
+// Custom hook untuk mempermudah penggunaan context
 export const useAuth = () => useContext(AuthContext);

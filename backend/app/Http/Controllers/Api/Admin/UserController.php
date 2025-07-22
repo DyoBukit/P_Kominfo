@@ -16,7 +16,7 @@ class UserController extends Controller
     public function index()
     {
         // Mengambil semua user, kecuali admin itu sendiri jika diperlukan
-        $users = User::where('role', 'pengguna')->latest()->get();
+        $users = User::where('role', 'user')->latest()->get();
         return response()->json($users);
     }
 
@@ -39,7 +39,7 @@ class UserController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'pengguna', // Otomatis set peran sebagai 'pengguna'
+            'role' => 'user', // Otomatis set peran sebagai 'pengguna'
         ]);
 
         // Kembalikan respons sukses dengan data user yang baru dibuat
