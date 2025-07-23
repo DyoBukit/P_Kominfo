@@ -1,7 +1,8 @@
 // src/components/LoginPage.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-// import InputField from './InputField'; // Kita akan menginlinekan InputField untuk penyesuaian ikon
+import { useNavigate } from 'react-router-dom'; // Ini untuk navigasi imperatif (fungsi navigate)
+// import InputField from './InputField'; // Baris ini sudah bisa dihapus karena InputField di-inline
+
 import ErrorMessage from './ErrorMessage';
 import { useAuth } from '../contexts/AuthContext'; 
 
@@ -12,9 +13,12 @@ function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate();
-  const { login } = useAuth(); 
+  const navigate = useNavigate(); // Inisialisasi useNavigate
+  const { login } = useAuth(); // Ambil fungsi login dari AuthContext
   const [loading, setLoading] = useState(false);
+
+  // Perhatikan: `isAuthenticated` dan `user` tidak diambil dari `useAuth()` di sini
+  // karena navigasi sudah langsung di-handle di `handleSubmit`
 
   const handleSubmit = async (e) => {
     e.preventDefault();
