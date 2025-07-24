@@ -6,15 +6,12 @@ import { Link } from 'react-router-dom';
 
 import backgroundImage from '../../assets/bg.png'; 
 
-// >>>>> Import komponen chart yang baru <<<<<
-import OpdDistributionChart from './OpdDistributionChart'; 
-
 function DashboardAdmin() {
   const { user, logout } = useAuth();
 
   return (
     <div className="relative min-h-screen w-full flex flex-col"> 
-      {/* Layer 1: Background Gambar yang di-Blur */}
+      {/* Layer Background Blur */}
       <div 
         className="absolute inset-0 z-0" 
         style={{
@@ -28,14 +25,14 @@ function DashboardAdmin() {
         <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div> 
       </div>
 
-      {/* Layer 2: Konten Halaman (Navbar & Main) - tetap tajam di atas blur */}
+      {/* Layer Konten (Navbar & Main) - tetap tajam di atas blur */}
       <div className="relative z-10 flex-grow flex flex-col py-6"> 
         <Navbar role="admin" />
         <main className="flex-grow p-8 md:p-12 max-w-6xl mx-auto w-full"> 
           <h1 className="py-4 text-4xl md:text-5xl font-bold text-white mb-10 text-center">
             Welcome, <span className="text-blue-400">{user?.username || 'Admin'}</span>! 
           </h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10"> {/* Tambahkan mb-10 untuk spasi */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
             <Link
               to="/admin/users"
               className="bg-white/10 p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center transform transition-transform duration-300 hover:scale-105 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20" 
@@ -52,11 +49,19 @@ function DashboardAdmin() {
               <h3 className="text-white text-2xl font-bold mt-4">Manage Evaluation Forms</h3> 
               <p className="text-gray-200 mt-2 text-lg">Create, view, and manage evaluation forms.</p> 
             </Link>
-          </div>
-
-          {/* >>>>> Tempatkan komponen chart di sini <<<<< */}
-          <div className="flex justify-center mt-8"> {/* Kontainer untuk pusatkan chart */}
-            <OpdDistributionChart />
+            {/* Mengarahkan ke halaman statistik baru */}
+            <Link // <--- PERBAIKAN: Komentar dipindahkan ke atas Link
+              to="/admin/charts" 
+              className="bg-white/10 p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center transform transition-transform duration-300 hover:scale-105 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20" 
+            >
+              {/* Ikon untuk Statistik (contoh: ikon chart) */}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+              </svg>
+              <h3 className="text-white text-2xl font-bold mt-4">View Statistics</h3> 
+              <p className="text-gray-200 mt-2 text-lg">See evaluation data distribution.</p> 
+            </Link>
           </div>
           
         </main>
