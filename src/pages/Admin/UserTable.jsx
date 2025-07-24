@@ -1,40 +1,48 @@
 // src/pages/Admin/UserTable.jsx
 import React from 'react';
 
-function UserTable({ users, onDelete }) {
+function UserTable({ users, onDelete, onEdit }) {
   return (
-    <div className="overflow-x-auto mt-8 bg-white rounded-xl shadow-lg">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-primary">
+    <div className="overflow-x-auto mt-8 bg-white/10 rounded-xl shadow-2xl backdrop-blur-lg border border-white/20">
+      <table className="min-w-full divide-y divide-gray-700">
+        <thead className="bg-white/10">
           <tr>
-            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+            <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
               ID
             </th>
-            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+            <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
               Username
             </th>
-            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+            <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
               Email
             </th>
-            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+            {/* >>>>>> PERBAIKAN: Hapus kolom Role dari header <<<<<< */}
+            {/* <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
               Role
-            </th>
-            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-black uppercase tracking-wider">
+            </th> */}
+            <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
               Actions
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-transparent divide-y divide-gray-700">
           {users.map(user => (
-            <tr key={user.id} className="hover:bg-primary/5 transition-colors duration-200">
-              <td className="px-6 py-4 whitespace-nowrap text-gray-800">{user.id}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-gray-800">{user.username}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-gray-800">{user.email}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-gray-800">{user.role}</td>
+            <tr key={user.id} className="hover:bg-white/5 transition-colors duration-200">
+              <td className="px-6 py-4 whitespace-nowrap text-gray-100">{user.id}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-gray-100">{user.username}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-gray-100">{user.email}</td>
+              {/* >>>>>> PERBAIKAN: Hapus kolom Role dari body <<<<<< */}
+              {/* <td className="px-6 py-4 whitespace-nowrap text-gray-100">{user.role}</td> */}
               <td className="px-6 py-4 whitespace-nowrap">
                 <button
+                  onClick={() => onEdit(user)}
+                  className="bg-blue-600/50 text-white py-2 px-4 rounded-md text-sm font-medium mr-2 hover:bg-blue-600/70 transition-colors duration-300 border border-blue-600/70"
+                >
+                  Edit
+                </button>
+                <button
                   onClick={() => onDelete(user.id)}
-                  className="bg-red-300 text-black font-semibold py-2 px-4 rounded-md text-sm font-medium hover:bg-red-800 transition-colors duration-300"
+                  className="bg-red-600/50 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-600/70 transition-colors duration-300 border border-red-600/70"
                 >
                   Delete
                 </button>
@@ -43,7 +51,8 @@ function UserTable({ users, onDelete }) {
           ))}
           {users.length === 0 && (
             <tr>
-              <td colSpan="5" className="px-6 py-8 text-center text-gray-500 text-lg">
+              {/* >>>>>> PERBAIKAN: colSpan disesuaikan menjadi 4 <<<<<< */}
+              <td colSpan="4" className="px-6 py-8 text-center text-gray-400 text-lg">
                 No users found.
               </td>
             </tr>
