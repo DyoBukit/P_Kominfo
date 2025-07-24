@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 
 class UserController extends Controller
@@ -15,7 +16,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        // Mengambil semua user, kecuali admin itu sendiri jika diperlukan
+        // Mengambil semua user dengan peran 'user', diurutkan dari yang terbaru.
         $users = User::where('role', 'user')->latest()->get();
         return response()->json($users);
     }
@@ -39,7 +40,7 @@ class UserController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'user', // Otomatis set peran sebagai 'pengguna'
+            'role' => 'user', // Otomatis set peran sebagai 'user'
         ]);
 
         // Kembalikan respons sukses dengan data user yang baru dibuat
@@ -55,13 +56,33 @@ class UserController extends Controller
     }
 
     /**
-     * Mengupdate data pengguna.
+     * Mengupdate data pengguna yang sudah ada.
      */
     public function update(Request $request, User $user)
     {
-        // Logika untuk update user bisa ditambahkan di sini
-        // ...
+        // --- PERBAIKAN DI SINI ---
+        // Hasil validasi harus disimpan ke dalam variabel $validatedData
+        $validatedData = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+        ]);
 
+        // Update data dasar pengguna
+        $user->name = $validatedData['name'];
+        $user->username = $validatedData['username'];
+        $user->email = $validatedData['email'];
+
+        // Jika ada password baru yang dikirim, update passwordnya
+        if ($request->filled('password')) {
+            $user->password = Hash::make($validatedData['password']);
+        }
+
+        // Simpan perubahan ke database
+        $user->save();
+
+        // Kembalikan respons sukses dengan data user yang sudah diupdate
         return response()->json($user);
     }
 
@@ -70,8 +91,15 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        // Tambahan keamanan: Pastikan admin tidak bisa menghapus akunnya sendiri.
+        if ($user->id === auth()->id()) {
+            return response()->json(['message' => 'Anda tidak dapat menghapus akun Anda sendiri.'], 403); // 403 = Forbidden
+        }
+        
+        // Hapus user dari database
         $user->delete();
 
+        // Kembalikan respons sukses tanpa konten
         return response()->json(null, 204); // 204 = No Content
     }
 }
