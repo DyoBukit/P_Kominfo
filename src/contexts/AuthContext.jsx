@@ -1,3 +1,4 @@
+// src/contexts/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../utils/Api'; 
 
@@ -9,10 +10,11 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // useEffect untuk memuat status autentikasi dari localStorage saat aplikasi pertama kali dimuat
+  // useEffect untuk memuat status autentikasi dari sessionStorage saat aplikasi pertama kali dimuat
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    // >>> PERBAIKAN: Gunakan sessionStorage <<<
+    const storedToken = sessionStorage.getItem('token');
+    const storedUser = sessionStorage.getItem('user');
 
     if (storedToken && storedUser) {
       const userObject = JSON.parse(storedUser);
@@ -23,7 +25,7 @@ export const AuthProvider = ({ children }) => {
       
       // Atur header Authorization default untuk semua request Axios selanjutnya
       api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-      console.log('AuthContext: Sesi ditemukan dari localStorage untuk user:', userObject.username);
+      console.log('AuthContext: Sesi ditemukan dari sessionStorage untuk user:', userObject.username);
     }
   }, []);
 
@@ -39,9 +41,9 @@ export const AuthProvider = ({ children }) => {
       // Jika berhasil, backend akan mengembalikan token dan data user (termasuk peran)
       const { access_token, user: userData } = response.data;
 
-      // Simpan token dan data user ke localStorage
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('user', JSON.stringify(userData));
+      // >>> PERBAIKAN: Simpan token dan data user ke sessionStorage <<<
+      sessionStorage.setItem('token', access_token);
+      sessionStorage.setItem('user', JSON.stringify(userData));
       
       // Perbarui state aplikasi
       setToken(access_token);
@@ -73,8 +75,9 @@ export const AuthProvider = ({ children }) => {
       console.error("Panggilan API logout gagal, tetap melanjutkan logout di sisi klien:", error);
     } finally {
       // Selalu bersihkan data di sisi klien, bahkan jika panggilan API gagal
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      // >>> PERBAIKAN: Hapus token dan user dari sessionStorage <<<
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       
       setToken(null);
       setUser(null);
@@ -90,7 +93,6 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     user, // Objek user berisi semua data, termasuk user.name, user.email, dan user.role
     login,
-
     logout,
   };
 
