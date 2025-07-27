@@ -66,14 +66,13 @@ class UserController extends Controller
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'username' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
             'email' => ['sometimes', 'required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => ['sometimes', 'nullable', 'confirmed', Rules\Password::defaults()],
+            'password' => ['sometimes', 'nullable', 'same:password_confirmation', Rules\Password::defaults()],
         ]);
 
         // Jika ada password baru yang dikirim, update passwordnya
-        if ($request->filled('password')) {
-            $user->password = Hash::make($validatedData['password']);
+         if ($request->filled('password')) {
+            $validatedData['password'] = Hash::make($validatedData['password']);
         }
-
         // Simpan perubahan ke database
         $user->update($validatedData);  
 
