@@ -8,7 +8,6 @@ import logo from '../assets/logo.png';
 function Navbar() {
   const navigate = useNavigate();
 
-
   const { isAuthenticated, user, role, logout } = useAuth();
 
   const handleLogout = () => {

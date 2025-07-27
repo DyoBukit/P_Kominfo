@@ -26,11 +26,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::middleware('auth:sanctum')->group(function (){
-    Route::get('/question', [EvaluationController::class, 'getQuestions']);
+    Route::get('/questions', [EvaluationController::class, 'getQuestions']);
     Route::post('/evaluation', [EvaluationController::class, 'store']);
 });
 
-Route::middleware(['auth:sacntum', 'admin'])->prefix('admin')->group(function(){
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function(){
     Route::get('/evaluasi', [EvaluationController::class, 'index']);
     Route::get('/evaluasi/{evaluation}', [EvaluationController::class, 'show']);
 });
