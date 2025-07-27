@@ -3,9 +3,12 @@
   import InputField from './InputField';
   import ErrorMessage from './ErrorMessage';
   import { FiPaperclip } from 'react-icons/fi';
-  import { useNavigate } from 'react-router-dom'; 
+  import { useNavigate } from 'react-router-dom';
+  import api from '../utils/Api';
 
-  import logo from '../assets/logoform.jpg'; 
+  import logo from '../assets/logoform.jpg';
+  
+  
 
   function EvaluationForm({ onSubmit, onBack }) { 
     const navigate = useNavigate(); 
@@ -22,18 +25,13 @@
         setLoadingQuestions(true);
         setFetchQuestionsError(null);
         try {
-          // GANTI URL INI dengan endpoint API backend Anda untuk pertanyaan formulir
-          const response = await fetch('http://localhost:8000/api/questions'); 
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          setQuestions(data); // Simpan pertanyaan
+          const response = await api.get('/questions');
+          const data = response.data;
+          setQuestions(data);
 
-          // Inisialisasi formData berdasarkan pertanyaan yang diterima
           const initialFormData = {};
           data.forEach(q => {
-            initialFormData[q.name] = q.type === 'file' && q.multiple ? [] : ''; // Default untuk file multiple adalah array kosong
+            initialFormData[q.name] = q.type === 'file' && q.multiple ? [] : '';
             if (q.type === 'select') {
               initialFormData[q.name] = '';
             }
@@ -50,6 +48,7 @@
 
       fetchQuestions();
     }, []);
+
 
     const handleChange = (e) => {
       const { name, value, files } = e.target;
@@ -233,7 +232,7 @@
               className="bg-black text-white px-6 py-3 rounded-md hover:bg-blue-200 transition duration-300 font-semibold" 
             >
               Kembali
-            </button>
+            </button> 
           </div>
         </form>
       </div>
