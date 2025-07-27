@@ -14,7 +14,6 @@ import AdminChartsPage from './pages/Admin/AdminChartsPage'; // <--- IMPORT HALA
 
 // Import halaman User
 import DashboardUser from './pages/User/DashboardUser';
-import EvaluationIntroPage from './pages/User/EvaluationIntroPage'; 
 import FormEvaluasiPage from './pages/User/FormEvaluasiPage';
 import EndPage from './pages/User/EndPage';
 
@@ -30,12 +29,11 @@ function App() {
             <Route path="/admin/dashboard" element={<DashboardAdmin />} />
             <Route path="/admin/users" element={<ManageUsersPage />} />
             <Route path="/admin/forms" element={<FormTable />} />
-            <Route path="/admin/charts" element={<AdminChartsPage />} /> {/* <--- RUTE BARU UNTUK CHART */}
+            <Route path="/admin/charts" element={<AdminChartsPage />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['user']} />}>
-            <Route path="/user/dashboard" element={<DashboardUser />} />
-            <Route path="/user/evaluasi" element={<EvaluationIntroPage />} />      
+            <Route path="/user/dashboard" element={<DashboardUser />} />     
             <Route path="/user/evaluasi/form" element={<FormEvaluasiPage />} /> 
             <Route path="/user/evaluasi/complete" element={<EndPage />} />
           </Route>

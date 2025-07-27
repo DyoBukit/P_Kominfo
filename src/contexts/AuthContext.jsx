@@ -12,7 +12,6 @@ export const AuthProvider = ({ children }) => {
 
   // useEffect untuk memuat status autentikasi dari sessionStorage saat aplikasi pertama kali dimuat
   useEffect(() => {
-    // >>> PERBAIKAN: Gunakan sessionStorage <<<
     const storedToken = sessionStorage.getItem('token');
     const storedUser = sessionStorage.getItem('user');
 
@@ -32,7 +31,7 @@ export const AuthProvider = ({ children }) => {
   // Fungsi login yang memanggil backend
   const login = async (credentials, role) => {
     // Tentukan endpoint API berdasarkan peran yang dipilih saat login
-    const endpoint = role === 'admin' ? '/admin/login' : '/login';
+    const endpoint = role === 'admin' ? 'admin/login' : '/login';
     
     try {
       console.log(`Mencoba login ke endpoint: ${endpoint}`);
@@ -57,25 +56,21 @@ export const AuthProvider = ({ children }) => {
 
     } catch (error) {
       console.error(`Login gagal untuk peran ${role}:`, error.response ? error.response.data : error.message);
-      // Lempar error lagi agar bisa ditangani di komponen LoginPage (misal: menampilkan pesan error)
+      
       throw error;
     }
   };
 
-  // Fungsi logout
   const logout = async () => {
-    // Tentukan endpoint logout berdasarkan peran user yang sedang login
     const endpoint = user?.role === 'admin' ? '/admin/logout' : '/logout';
     
     try {
-      // Panggil API untuk membatalkan token di server (best practice)
       await api.post(endpoint);
       console.log('Token berhasil dibatalkan di server.');
     } catch (error) {
       console.error("Panggilan API logout gagal, tetap melanjutkan logout di sisi klien:", error);
     } finally {
-      // Selalu bersihkan data di sisi klien, bahkan jika panggilan API gagal
-      // >>> PERBAIKAN: Hapus token dan user dari sessionStorage <<<
+
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
       
