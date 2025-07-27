@@ -15,9 +15,12 @@ class AuthenticatedSessionController extends Controller
     {
 
         if (! Auth::attempt($request->only('username', 'password'))) {
-            throw ValidationException::withMessages([
-                'username' => trans('auth.failed'),
-            ]);
+            // throw ValidationException::withMessages([
+            //     'username' => trans('auth.failed'),
+            // ]);
+            return response()->json([
+                'message'=>'login failed'
+            ], 404);
         }
 
         $user = Auth::user();

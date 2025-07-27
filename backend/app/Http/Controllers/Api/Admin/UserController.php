@@ -63,16 +63,11 @@ class UserController extends Controller
         // --- PERBAIKAN DI SINI ---
         // Hasil validasi harus disimpan ke dalam variabel $validatedData
         $validatedData = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'username' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => ['sometimes', 'required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'password' => ['sometimes', 'nullable', 'confirmed', Rules\Password::defaults()],
         ]);
-
-        // Update data dasar pengguna
-        $user->name = $validatedData['name'];
-        $user->username = $validatedData['username'];
-        $user->email = $validatedData['email'];
 
         // Jika ada password baru yang dikirim, update passwordnya
         if ($request->filled('password')) {
@@ -80,7 +75,7 @@ class UserController extends Controller
         }
 
         // Simpan perubahan ke database
-        $user->save();
+        $user->update($validatedData);  
 
         // Kembalikan respons sukses dengan data user yang sudah diupdate
         return response()->json($user);
@@ -100,6 +95,6 @@ class UserController extends Controller
         $user->delete();
 
         // Kembalikan respons sukses tanpa konten
-        return response()->json(null, 204); // 204 = No Content
+        return response()->json(['message' => 'Data berhasil dihapus!'], 201); // 204 = No Content
     }
 }
