@@ -1,242 +1,195 @@
-  // src/components/EvaluationForm.jsx
-  import React, { useState, useEffect } from 'react'; // Tambahkan useEffect
-  import InputField from './InputField';
-  import ErrorMessage from './ErrorMessage';
-  import { FiPaperclip } from 'react-icons/fi';
-  import { useNavigate } from 'react-router-dom';
-  import api from '../utils/Api';
+// src/components/EvaluationForm.jsx
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../utils/Api'; // Pastikan path ini benar
+import ErrorMessage from './ErrorMessage';
+import { FiPaperclip } from 'react-icons/fi';
+import logo from '../assets/logoform.jpg';
 
-  import logo from '../assets/logoform.jpg';
-  
-  
+// Opsi statis untuk dropdown, karena tidak ada di DB
+const opdOptions = [
+  "Inspektorat Daerah", "Sekretariat Daerah", "BPKAD", "BAPPEDA", 
+  "BKPSDM", "BPPRD", "DISDUKCAPIL", "Dinas Perpustakaan dan Arsip Daerah",
+  "DPMPTSP", "DINKES", "DISKOMINFO", "Bag. Hukum Setda", 
+  "Bag. Organisasi Setda", "Bag. Pengadaan Barang dan Jasa Setda"
+];
 
-  function EvaluationForm({ onSubmit, onBack }) { 
-    const navigate = useNavigate(); 
+function EvaluationForm() {
+  const navigate = useNavigate();
+  const [questions, setQuestions] = useState([]);
+  // State answers sekarang akan menggunakan ID pertanyaan sebagai kunci: { '1': 'jawaban', '2': 'jawaban lain' }
+  const [answers, setAnswers] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [submitError, setSubmitError] = useState('');
 
-    const [questions, setQuestions] = useState([]); // State untuk menyimpan pertanyaan dari backend
-    const [formData, setFormData] = useState({}); // Data form akan diinisialisasi dinamis
-    const [errors, setErrors] = useState({});
-    const [loadingQuestions, setLoadingQuestions] = useState(true); // State loading pertanyaan
-    const [fetchQuestionsError, setFetchQuestionsError] = useState(null); // State error fetch pertanyaan
-
-    // >>> useEffect untuk mengambil pertanyaan dari backend <<<
-    useEffect(() => {
-      const fetchQuestions = async () => {
-        setLoadingQuestions(true);
-        setFetchQuestionsError(null);
-        try {
-          const response = await api.get('/questions');
-          const data = response.data;
-          setQuestions(data);
-
-          const initialFormData = {};
-          data.forEach(q => {
-            initialFormData[q.name] = q.type === 'file' && q.multiple ? [] : '';
-            if (q.type === 'select') {
-              initialFormData[q.name] = '';
-            }
-          });
-          setFormData(initialFormData);
-
-        } catch (err) {
-          console.error("Gagal mengambil pertanyaan formulir:", err);
-          setFetchQuestionsError("Gagal memuat pertanyaan. Pastikan backend berjalan & endpoint '/api/questions' benar.");
-        } finally {
-          setLoadingQuestions(false);
-        }
-      };
-
-      fetchQuestions();
-    }, []);
-
-
-    const handleChange = (e) => {
-      const { name, value, files } = e.target;
-      // Mengubah cara handle file untuk multiple
-      if (files) {
-        setFormData(prevData => ({ ...prevData, [name]: files })); // Simpan FileList untuk multiple files
-      } else {
-        setFormData(prevData => ({ ...prevData, [name]: value }));
-      }
-      // Hapus error jika field diubah
-      if (errors[name]) {
-        setErrors(prevErrors => ({ ...prevErrors, [name]: '' }));
+  // 1. Mengambil pertanyaan dari backend
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const response = await api.get('/questions');
+        setQuestions(response.data);
+        // Inisialisasi state answers berdasarkan ID pertanyaan
+        const initialAnswers = {};
+        response.data.forEach(q => {
+          initialAnswers[q.id] = ''; // Gunakan ID sebagai kunci
+        });
+        setAnswers(initialAnswers);
+      } catch (err) {
+        setSubmitError("Gagal memuat pertanyaan. Pastikan backend berjalan.");
+        console.error("Fetch questions error:", err);
+      } finally {
+        setLoading(false);
       }
     };
+    fetchQuestions();
+  }, []);
 
-    const validateForm = () => {
-      const newErrors = {};
-      let isValid = true;
+  // 2. Menangani perubahan pada setiap input
+  const handleChange = (questionId, value) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: value,
+    }));
+  };
 
-      questions.forEach(q => {
-        if (q.required) {
-          const value = formData[q.name];
-          if (q.type === 'file') {
-            // Validasi file: harus ada dan minimal 1 file jika multiple
-            if (!value || value.length === 0) {
-              newErrors[q.name] = 'Kolom ini wajib diisi.';
-              isValid = false;
-            }
-          } else if (q.type === 'text' || q.type === 'textarea' || q.type === 'email' || q.type === 'password' || q.type === 'select') {
-            if (!value || (typeof value === 'string' && value.trim() === '')) {
-              newErrors[q.name] = 'Kolom ini wajib diisi.';
-              isValid = false;
-            }
-          }
-        }
+  // 3. Mengirim semua data ke backend saat form di-submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setSubmitError('');
+
+    const submissionData = new FormData();
+    submissionData.append('form_title', 'Evaluasi SPBE 2024');
+
+    for (const questionId in answers) {
+      if (answers[questionId]) {
+        submissionData.append(`answers[${questionId}]`, answers[questionId]);
+      }
+    }
+
+    try {
+      await api.post('/evaluasi', submissionData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-
-      setErrors(newErrors);
-      return isValid;
-    };
-
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      if (validateForm()) {
-        onSubmit(formData);
-        alert('Form berhasil dikirim!');
-      } else {
-        alert('Mohon lengkapi semua kolom yang wajib diisi.');
-      }
-    };
-
-    const handleGoBackInternal = () => {
-      if (onBack) {
-        onBack(); 
-      } else {
-        navigate(-1); 
-      }
-    };
-
-    if (loadingQuestions) {
-      return (
-        <div className="max-w-3xl mx-auto bg-white/10 p-6 md:p-10 shadow-lg rounded-xl text-white flex justify-center items-center h-64">
-          <p className="text-xl">Memuat pertanyaan formulir...</p>
-        </div>
-      );
+      navigate('/user/evaluasi/complete');
+    } catch (err) {
+      setSubmitError(err.response?.data?.message || 'Gagal mengirim form. Mohon periksa kembali isian Anda.');
+      console.error("Submit error:", err);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (fetchQuestionsError) {
-      return (
-        <div className="max-w-3xl mx-auto bg-white/10 p-6 md:p-10 shadow-lg rounded-xl text-red-400 flex justify-center items-center h-64">
-          <p className="text-xl">Error: {fetchQuestionsError}</p>
-          <p className="text-sm text-gray-400 mt-2">Pastikan backend berjalan dan endpoint '/api/questions' benar.</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="max-w-3xl mx-auto bg-white p-6 md:p-10 shadow-lg rounded-xl">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mt-2 mb-4">
-            EVALUASI SISTEM PEMERINTAHAN BERBASIS ELEKTRONIK (SPBE) TAHUN 2024
-          </h1>
-          <p className="text-gray-500 text-sm italic font-semibold">Formulir Upload Data Dukung Evaluasi Mandiri SPBE Tahun 2023</p>
-          <img
-            src={logo}
-            alt="Header SPBE"
-            className="mt-4 rounded-lg"
-          />
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Loop melalui pertanyaan yang diambil dari backend */}
-          {questions.map(q => (
-            <div key={q.id}>
-              {q.type === 'text' || q.type === 'email' || q.type === 'password' || q.type === 'textarea' ? (
-                <InputField
-                  label={q.label}
-                  type={q.type}
-                  id={q.name}
-                  name={q.name}
-                  value={formData[q.name] || ''}
-                  onChange={handleChange}
-                  placeholder={q.placeholder}
-                  error={errors[q.name]}
-                  // Untuk textarea, tambahkan min-h dan resize-y
-                  {...(q.type === 'textarea' ? { className: "min-h-[100px] resize-y" } : {})}
-                />
-              ) : q.type === 'select' ? (
-                <div>
-                  <label htmlFor={q.name} className="block font-medium text-gray-800">
-                    {q.label} {q.required && <span className="text-red-600">*</span>}
-                  </label>
-                  <select
-                    name={q.name}
-                    id={q.name}
-                    value={formData[q.name] || ''}
-                    onChange={handleChange}
-                    className="w-full pl-4 pr-4 py-3 rounded-full bg-gray-700 text-white placeholder-gray-400 border border-gray-600 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-                  >
-                    <option value="" disabled hidden>Pilih</option>
-                    {q.options && q.options.map((option, idx) => (
-                      <option key={idx} value={option} className="bg-gray-800 text-white">{option}</option>
-                    ))}
-                  </select>
-                  {errors[q.name] && <ErrorMessage message={errors[q.name]} />}
-                </div>
-              ) : q.type === 'file' ? (
-                <div className="mt-4">
-                  <label htmlFor={q.name} className="block font-medium text-gray-800 mb-2">
-                    {q.label} {q.required && <span className="text-red-600">*</span>}
-                  </label>
-                  <input
-                    type="file"
-                    id={q.name}
-                    name={q.name}
-                    onChange={handleChange}
-                    multiple={q.multiple} // Atribut multiple diambil dari data backend
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor={q.name}
-                    className="inline-flex items-center gap-2 bg-blue-600 text-white py-2 px-4 rounded-md cursor-pointer hover:bg-blue-700 transition"
-                  >
-                    <FiPaperclip className="text-lg" />
-                    Tambahkan File
-                  </label>
-                  {formData[q.name] && formData[q.name].length > 0 && (
-                    <div className="mt-2 text-sm text-gray-600">
-                      <p className="font-medium">File terpilih:</p>
-                      <ul className="list-disc list-inside ml-4">
-                        {Array.from(formData[q.name]).map((fileItem, index) => (
-                          <li key={index}>{fileItem.name}</li>
-                        ))}
-                      </ul>
-                      <small className="text-gray-500">Total {formData[q.name].length} file dipilih.</small>
-                    </div>
-                  )}
-                  {q.description && ( // Tampilkan deskripsi jika ada
-                    <small className="mt-2 text-sm text-gray-500 block">{q.description}</small>
-                  )}
-                  {errors[q.name] && <ErrorMessage message={errors[q.name]} />}
-                </div>
-              ) : null}
-            </div>
-          ))}
-
-          {/* Tombol Kirim dan Kembali */}
-          <div className="flex justify-start items-center gap-4 mt-6"> 
-            {/* Tombol Kirim */}
-            <button
-              type="submit"
-              className="bg-blue-700 text-white font-semibold py-3 px-6 rounded-md hover:bg-blue-800 transition"
-            >
-              Kirim
-            </button>
-            {/* Tombol Kembali */}
-            <button
-              type="button" 
-              onClick={handleGoBackInternal}
-              className="bg-black text-white px-6 py-3 rounded-md hover:bg-blue-200 transition duration-300 font-semibold" 
-            >
-              Kembali
-            </button> 
-          </div>
-        </form>
-      </div>
-    );
+  // Tampilan saat loading
+  if (loading) {
+    return <div className="text-center p-10">Memuat formulir...</div>;
+  }
+  if (submitError && questions.length === 0) {
+    return <div className="text-center text-red-500 p-10">{submitError}</div>;
   }
 
-  export default EvaluationForm;
+  // Fungsi untuk me-render input yang sesuai berdasarkan tipe pertanyaan
+  const renderQuestion = (q) => {
+    // Render dropdown khusus untuk pertanyaan pertama (Pilih OPD)
+    if (q.id === 1) {
+      return (
+        <div>
+          <label htmlFor={`question_${q.id}`} className="block font-medium text-gray-800 mb-2">{q.question_text}</label>
+          <select
+            id={`question_${q.id}`}
+            value={answers[q.id] || ''}
+            onChange={(e) => handleChange(q.id, e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg"
+          >
+            <option value="" disabled>Pilih salah satu...</option>
+            {opdOptions.map((opt, index) => <option key={index} value={opt}>{opt}</option>)}
+          </select>
+        </div>
+      );
+    }
+
+    switch (q.type) {
+      case 'multiple_choice':
+        return (
+          <div>
+            <p className="block font-medium text-gray-800 mb-2">{q.question_text}</p>
+            <div className="flex space-x-4">
+              {['Ya', 'Draft (dalam proses)', 'Tidak'].map(opt => (
+                <label key={opt} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`question_${q.id}`}
+                    value={opt}
+                    checked={answers[q.id] === opt}
+                    onChange={(e) => handleChange(q.id, e.target.value)}
+                  />
+                  <span>{opt}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      
+      case 'essay':
+        return (
+          <div>
+            <label htmlFor={`question_${q.id}`} className="block font-medium text-gray-800 mb-2">{q.question_text}</label>
+            <textarea
+              id={`question_${q.id}`}
+              value={answers[q.id] || ''}
+              onChange={(e) => handleChange(q.id, e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg min-h-[100px]"
+            />
+          </div>
+        );
+
+      case 'file':
+        return (
+          <div>
+            <label htmlFor={`question_${q.id}`} className="block font-medium text-gray-800 mb-2">{q.question_text}</label>
+            <input
+              id={`question_${q.id}`}
+              type="file"
+              onChange={(e) => handleChange(q.id, e.target.files[0])}
+              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            {answers[q.id] && <p className="text-sm text-gray-600 mt-2">File terpilih: {answers[q.id].name}</p>}
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto bg-white p-6 md:p-10 shadow-lg rounded-xl">
+      <div className="mb-6 text-center">
+        <img src={logo} alt="Header SPBE" className="mt-4 rounded-lg mx-auto" style={{ maxWidth: '300px' }}/>
+        <h1 className="text-2xl font-bold mt-4 mb-2">EVALUASI SPBE TAHUN 2024</h1>
+        <p className="text-gray-500 text-sm">Formulir Upload Data Dukung Evaluasi Mandiri</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {questions.map(q => (
+          <div key={q.id}>
+            {renderQuestion(q)}
+          </div>
+        ))}
+
+        {submitError && <ErrorMessage message={submitError} />}
+
+        <div className="flex justify-start items-center gap-4 mt-8">
+          <button type="submit" disabled={loading} className="bg-blue-700 text-white font-semibold py-3 px-6 rounded-md hover:bg-blue-800 transition disabled:opacity-50">
+            {loading ? 'Mengirim...' : 'Kirim'}
+          </button>
+          <button type="button" onClick={() => navigate(-1)} className="bg-gray-200 text-gray-800 px-6 py-3 rounded-md hover:bg-gray-300 transition font-semibold">
+            Kembali
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export default EvaluationForm;
