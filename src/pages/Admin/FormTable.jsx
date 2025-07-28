@@ -21,7 +21,7 @@ function FormTable() {
     try {
       // >>> MENGGUNAKAN API.GET() UNTUK MENGAMBIL DATA <<<
       // Pastikan URL ini sesuai dengan rute GET di routes/api.php Anda (contoh: /api/admin/forms)
-      const response = await api.get('/admin/evaluasi'); 
+      const response = await api.get('/admin/evaluations'); 
       setForms(response.data); // Asumsi backend mengembalikan array form (evaluasi) langsung di response.data
     } catch (err) {
       console.error("Gagal mengambil data formulir:", err.response ? err.response.data : err.message);

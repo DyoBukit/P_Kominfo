@@ -12,12 +12,18 @@ use Illuminate\Support\Facades\Storage;
 
 class EvaluationController extends Controller
 {
+    /**
+     * Mengambil semua pertanyaan untuk form evaluasi.
+     */
     public function getQuestions()
     {
         $questions = Question::orderBy('id')->get();
         return response()->json($questions);
     }
 
+    /**
+     * Menyimpan hasil form evaluasi.
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -25,44 +31,53 @@ class EvaluationController extends Controller
             'answers' => 'required|array'
         ]);
 
-    
-        $evaluations = Evaluation::create([
+        $evaluation = Evaluation::create([
             'user_id' => Auth::id(),
             'form_title' => $request->form_title,
             'status' => 'completed',
         ]);
 
+        // --- PERBAIKAN UTAMA DI SINI ---
         foreach ($request->answers as $questionId => $answerValue){
             
-            $questions = Question::find($questionId);
-            if(!$questions) continue;
+            // Mengganti nama variabel dari $questions menjadi $question (tunggal)
+            $question = Question::find($questionId);
+            if(!$question) continue;
             
             $finalAnswerValue = $answerValue;
 
-            if ($questions->type === 'file' && is_file($answerValue)) {
-                    $path = $answerValue->store('uploads', 'public');
-                    $finalAnswerValue = $path; 
+            // Menggunakan variabel $question yang sudah benar
+            if ($question->type === 'file' && is_file($answerValue)) {
+                $path = $answerValue->store('uploads', 'public');
+                $finalAnswerValue = $path; 
             }
             
-                Answer::create([
-                    'evaluation_id' => $evaluations->id,
-                    'question_id' => $questionId,   
-                    'answer_value' => $answerValue,
-                ]);
-            
+            Answer::create([
+                'evaluation_id' => $evaluation->id,
+                'question_id' => $questionId,  
+                'answer_value' => $finalAnswerValue, // Menggunakan $finalAnswerValue yang sudah diproses
+            ]);
         }
 
         return response()->json(['message' => 'Evaluasi berhasil disimpan.'], 201);
     }
 
+    /**
+     * Menampilkan semua hasil evaluasi (untuk Admin).
+     */
     public function index()
     {
         $evaluations = Evaluation::with('user:id,name,username')->latest()->get();
         return response()->json($evaluations);
     }
-    public function show(Evaluation $evaluations)
+
+    /**
+     * Menampilkan detail satu hasil evaluasi (untuk Admin).
+     */
+    public function show(Evaluation $evaluation)
     {
-        $evaluations->load('answers.question');
-        return response()->json($evaluations);
+        // Muat relasi jawaban beserta pertanyaan terkait
+        $evaluation->load('answers.question');
+        return response()->json($evaluation);
     }
 }
