@@ -68,7 +68,7 @@ function EvaluationForm() {
     }
 
     try {
-      await api.post('/evaluasi', submissionData, {
+      await api.post('/evaluations', submissionData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       navigate('/user/evaluasi/complete');

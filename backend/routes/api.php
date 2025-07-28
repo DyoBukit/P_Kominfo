@@ -27,10 +27,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::middleware('auth:sanctum')->group(function (){
     Route::get('/questions', [EvaluationController::class, 'getQuestions']);
-    Route::post('/evaluation', [EvaluationController::class, 'store']);
+    Route::post('/evaluations', [EvaluationController::class, 'store']);
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function(){
-    Route::get('/evaluasi', [EvaluationController::class, 'index']);
-    Route::get('/evaluasi/{evaluation}', [EvaluationController::class, 'show']);
+    Route::get('/evaluations', [EvaluationController::class, 'index']);
+    Route::get('/evaluations/{evaluation}', [EvaluationController::class, 'show']);
 });
