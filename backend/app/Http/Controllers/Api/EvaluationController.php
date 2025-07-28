@@ -21,57 +21,48 @@ class EvaluationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'form_title' => 'required|string|max:255',
+            'form_title' => 'required|string',
+            'answers' => 'required|array'
         ]);
 
     
-        $evaluation = Evaluation::create([
+        $evaluations = Evaluation::create([
             'user_id' => Auth::id(),
             'form_title' => $request->form_title,
             'status' => 'completed',
         ]);
 
-    
-        $questions = Question::all()->keyBy('id');
+        foreach ($request->answers as $questionId => $answerValue){
+            
+            $questions = Question::find($questionId);
+            if(!$questions) continue;
+            
+            $finalAnswerValue = $answerValue;
 
-      
-        foreach ($questions as $id => $question) {
-            $answerValue = null;
-            $inputKey = 'answers.'.$id; 
-
-            if ($question->type === 'file') {
-                if ($request->hasFile($inputKey)) {
-                    $request->validate([$inputKey => 'required|file|mimes:pdf,jpg,png,docx|max:2048']);
-                    $path = $request->file($inputKey)->store('uploads', 'public');
-                    $answerValue = $path; 
-            } else {
-                if ($request->has($inputKey)) {
-                    $request->validate([$inputKey => 'required|string']);
-                    $answerValue = $request->input($inputKey);
-                }
+            if ($questions->type === 'file' && is_file($answerValue)) {
+                    $path = $answerValue->store('uploads', 'public');
+                    $finalAnswerValue = $path; 
             }
-
-            if ($answerValue !== null) {
+            
                 Answer::create([
-                    'evaluation_id' => $evaluation->id,
-                    'question_id' => $id,
+                    'evaluation_id' => $evaluations->id,
+                    'question_id' => $questionId,   
                     'answer_value' => $answerValue,
                 ]);
-            }
+            
         }
 
         return response()->json(['message' => 'Evaluasi berhasil disimpan.'], 201);
     }
 
-}
     public function index()
     {
         $evaluations = Evaluation::with('user:id,name,username')->latest()->get();
         return response()->json($evaluations);
     }
-    public function show(Evaluation $evaluation)
+    public function show(Evaluation $evaluations)
     {
-        $evaluation->load('answers.question');
-        return response()->json($evaluation);
+        $evaluations->load('answers.question');
+        return response()->json($evaluations);
     }
 }
