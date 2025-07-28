@@ -48,18 +48,6 @@ function EvaluationIntroPage() {
               className="absolute inset-0 w-full h-full object-cover opacity-5 pointer-events-none"
             />
 
-            {/* Tombol Kembali - Posisi absolute di SUDUT KIRI ATAS kotak */}
-            <button
-              onClick={handleGoBack}
-              className="absolute top-6 left-6 flex items-center text-gray-600 px-3 py-1.5 rounded-full bg-white hover:bg-gray-100
-                         transition duration-300 border border-gray-300 text-sm font-semibold z-20" // z-20 agar di atas pattern
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Kembali
-            </button>
-
             {/* Konten utama di dalam kotak - harus di atas background pattern */}
             <div className="mt-10 relative z-10">
               {/* Ikon */}

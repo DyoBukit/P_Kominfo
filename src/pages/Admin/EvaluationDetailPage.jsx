@@ -7,7 +7,7 @@ import api from '../../utils/Api'; // Pastikan path ini benar
 import backgroundImage from '../../assets/bg.png'; // Pastikan path ini benar
 
 function EvaluationDetailPage() {
-  const { id } = useParams(); // Mengambil ID evaluasi dari URL
+  const { id } = useParams(); 
   const navigate = useNavigate();
   const [evaluation, setEvaluation] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,6 +18,7 @@ function EvaluationDetailPage() {
       try {
         setLoading(true);
         setError(null);
+
         const response = await api.get(`/admin/evaluasi/${id}`);
         setEvaluation(response.data);
       } catch (err) {

@@ -82,7 +82,7 @@ function EvaluationForm() {
 
   // Tampilan saat loading
   if (loading) {
-    return <div className="text-center p-10">Memuat formulir...</div>;
+    return <div className="text-center text-white p-10">Memuat formulir...</div>;
   }
   if (submitError && questions.length === 0) {
     return <div className="text-center text-red-500 p-10">{submitError}</div>;
