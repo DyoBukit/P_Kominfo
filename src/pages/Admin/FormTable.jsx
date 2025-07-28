@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
 import { useNavigate } from 'react-router-dom'; 
-import ErrorMessage from '../../components/ErrorMessage'; // Pastikan ini diimpor dengan benar
+import ErrorMessage from '../../components/ErrorMessage'; 
+import api from '../../utils/Api'; // <--- PASTIKAN INI DIIMPOR DENGAN BENAR DARI FILE API.JS ANDA
 
 // Import gambar background Anda
 import backgroundImage from '../../assets/bg.png'; // Pastikan path ini benar
@@ -18,18 +19,13 @@ function FormTable() {
     setLoadingForms(true);
     setFetchError(null);
     try {
-      // >>> PERBAIKAN: Gunakan backticks untuk URL <<<
-      const response = await fetch(`http://localhost:8000/api/forms`); 
-      if (!response.ok) {
-        // >>> PERBAIKAN: Gunakan backticks untuk pesan error <<<
-        throw new Error(`HTTP error! status: ${response.status}`); 
-      }
-      const data = await response.json();
-      setForms(data); 
+      // >>> MENGGUNAKAN API.GET() UNTUK MENGAMBIL DATA <<<
+      // Pastikan URL ini sesuai dengan rute GET di routes/api.php Anda (contoh: /api/admin/forms)
+      const response = await api.get('/admin/evaluasi'); 
+      setForms(response.data); // Asumsi backend mengembalikan array form (evaluasi) langsung di response.data
     } catch (err) {
-      console.error("Gagal mengambil data formulir:", err);
-      // >>> PERBAIKAN: Gunakan backticks untuk pesan error <<<
-      setFetchError(`Gagal memuat formulir. Pastikan backend berjalan.`); 
+      console.error("Gagal mengambil data formulir:", err.response ? err.response.data : err.message);
+      setFetchError(`Gagal memuat formulir: ${err.response?.data?.message || err.message || 'Server tidak merespons.'}`);
     } finally {
       setLoadingForms(false);
     }
@@ -45,37 +41,25 @@ function FormTable() {
       return;
     }
     try {
-      // >>> PERBAIKAN: Gunakan backticks untuk URL <<<
-      const response = await fetch(`http://localhost:8000/api/forms/${id}`, {
-        method: 'DELETE',
-        headers: {
-          // 'Authorization': `Bearer ${token}` // Tambahkan jika ada autentikasi API
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        // >>> PERBAIKAN: Gunakan backticks untuk pesan error <<<
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`); 
-      }
+      // >>> MENGGUNAKAN API.DELETE() UNTUK MENGHAPUS DATA <<<
+      const response = await api.delete(`/  /${id}`); // Mengirim permintaan DELETE ke /api/admin/forms/{id}
 
       alert('Formulir berhasil dihapus!');
-      fetchForms(); 
+      fetchForms(); // Refresh daftar formulir setelah hapus
     } catch (err) {
-      console.error("Gagal menghapus formulir:", err);
-      // >>> PERBAIKAN: Gunakan backticks untuk pesan error <<<
-      setFetchError(`Gagal menghapus formulir: ${err.message || err.toString()}`);
+      console.error("Gagal menghapus formulir:", err.response ? err.response.data : err.message);
+      setFetchError(`Gagal menghapus formulir: ${err.response?.data?.message || err.message || 'Server tidak merespons.'}`);
     }
   };
 
-  const handleEditForm = (id) => {
-    // >>> PERBAIKAN: Gunakan backticks untuk navigasi <<<
-    navigate(`/admin/forms/edit/${id}`); 
+  // Fungsi untuk melihat detail/hasil evaluasi (menggantikan Edit)
+  const handleViewEvaluation = (id) => { 
+    navigate(`/admin/forms/view/${id}`); // Mengarahkan ke rute baru untuk melihat detail evaluasi
   };
 
   // Fungsi untuk tombol kembali
   const handleGoBack = () => {
-    navigate('/admin/dashboard'); 
+    navigate('/admin/dashboard'); // Arahkan kembali ke dashboard admin
   };
 
   return (
@@ -128,13 +112,16 @@ function FormTable() {
                       ID
                     </th>
                     <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
+                      User ID
+                    </th> {/* Kolom User ID dari database evaluations */}
+                    <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
                       Title
                     </th>
                     <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
                       Status
                     </th>
                     <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
-                      Created Date
+                      Tanggal Dibuat
                     </th>
                     <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
                       Actions
@@ -145,15 +132,16 @@ function FormTable() {
                   {forms.map(form => (
                     <tr key={form.id} className="hover:bg-white/5 transition-colors duration-200"> 
                       <td className="px-6 py-4 whitespace-nowrap text-gray-100">{form.id}</td> 
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-100">{form.title}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-100">{form.user_id}</td> {/* Menampilkan user_id */}
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-100">{form.form_title}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-100">{form.status}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-100">{form.created}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-100">{form.created_at ? new Date(form.created_at).toLocaleDateString() : '-'}</td> 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
-                          onClick={() => handleEditForm(form.id)} 
+                          onClick={() => handleViewEvaluation(form.id)} 
                           className="bg-blue-600/50 text-white py-2 px-4 rounded-md text-sm font-medium mr-2 hover:bg-blue-600/70 transition-colors duration-300 border border-blue-600/70"
                         >
-                          Edit
+                          Lihat Evaluasi
                         </button>
                         <button
                           onClick={() => handleDeleteForm(form.id)}
@@ -166,7 +154,7 @@ function FormTable() {
                   ))}
                   {forms.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="px-6 py-8 text-center text-gray-400 text-lg"> 
+                      <td colSpan="6" className="px-6 py-8 text-center text-gray-400 text-lg"> 
                         No evaluation forms found.
                       </td>
                     </tr>

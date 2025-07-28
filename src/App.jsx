@@ -10,6 +10,7 @@ import ProtectedRoute from './contexts/ProtectedRoute';
 import DashboardAdmin from './pages/Admin/DashboardAdmin';
 import ManageUsersPage from './pages/Admin/ManageUsersPage';
 import FormTable from './pages/Admin/FormTable';
+import EvaluationDetailPage from './pages/Admin/EvaluationDetailPage';
 import AdminChartsPage from './pages/Admin/AdminChartsPage'; // <--- IMPORT HALAMAN CHART BARU
 
 // Import halaman User
@@ -29,6 +30,7 @@ function App() {
             <Route path="/admin/dashboard" element={<DashboardAdmin />} />
             <Route path="/admin/users" element={<ManageUsersPage />} />
             <Route path="/admin/forms" element={<FormTable />} />
+            <Route path="/admin/forms/view/:id" element={<EvaluationDetailPage />} />
             <Route path="/admin/charts" element={<AdminChartsPage />} />
           </Route>
 
