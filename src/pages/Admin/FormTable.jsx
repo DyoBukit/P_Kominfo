@@ -41,6 +41,10 @@ function FormTable() {
     setPage(1); // reset ke page 1 saat pencarian
   };
 
+  const handleGoBack = () => {
+    navigate('/admin/dashboard'); 
+  };
+
   return (
     <div className="relative min-h-screen">
       <div 
@@ -59,6 +63,15 @@ function FormTable() {
       <div className="relative z-10 py-6">
         <Navbar role="admin" />
         <main className="p-8 md:p-12 max-w-6xl mx-auto">
+          <button
+            onClick={handleGoBack}
+            className="mb-6 flex items-center text-gray-100 px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 transition duration-300 border border-white/20"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Kembali ke Dashboard
+          </button>
           <div className="mb-6 flex justify-between items-center">
             <h1 className="text-3xl md:text-4xl font-bold text-white">Evaluation Forms</h1>
             <input

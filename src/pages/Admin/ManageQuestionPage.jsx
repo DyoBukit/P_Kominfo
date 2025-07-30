@@ -4,6 +4,7 @@ import api from '../../utils/Api';
 import Navbar from '../../components/Navbar';
 import backgroundImage from '../../assets/bg.png';
 import InputField from '../../components/InputField';
+import { useNavigate } from 'react-router-dom';
 
 function ManageQuestionsPage() {
   const [questions, setQuestions] = useState([]);
@@ -11,6 +12,7 @@ function ManageQuestionsPage() {
   const [description, setDescription] = useState('');
   const [questionType, setQuestionType] = useState('isian');
   const [category, setCategory] = useState('');
+  const navigate = useNavigate();
 
   const fetchQuestions = async () => {
     try {
@@ -54,6 +56,10 @@ function ManageQuestionsPage() {
     fetchQuestions();
   }, []);
 
+  const handleGoBack = () => {
+    navigate('/admin/dashboard'); 
+  };
+
   return (
     <div className="relative min-h-screen w-full flex flex-col">
       <div 
@@ -72,6 +78,15 @@ function ManageQuestionsPage() {
       <div className="relative z-10 flex-grow flex flex-col py-6">
         <Navbar role="admin" />
         <main className="flex-grow p-8 md:p-12 max-w-4xl mx-auto w-full">
+          <button
+            onClick={handleGoBack}
+            className="mb-6 flex items-center text-gray-100 px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 transition duration-300 border border-white/20"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Kembali ke Dashboard
+          </button>
           <h1 className="text-4xl font-bold text-white mb-8 text-center">
             Kelola <span className="text-blue-400">Pertanyaan Evaluasi</span>
           </h1>
@@ -101,15 +116,17 @@ function ManageQuestionsPage() {
               <select
                 id="questionType"
                 className="w-full p-2 mb-3 border border-white/20 rounded text-white"
-                value={newQuestion.type}
-                onChange={(e) => setQuestionType({type: e.target.value })}
+                value={questionType}
+                onChange={(e) => setQuestionType(e.target.value)}
               >
-                <option value="isian" className='text-black'>Isian</option>
-                <option value="ya_tidak" className='text-black'>Pilihan Ya/Draft sedang diproses/Tidak</option>
+                <option value="isian" className="text-black">Isian</option>
+                <option value="ya_tidak" className="text-black">Ya/Tidak/Draft(dalam proses)</option>
+                <option value="unggah_file" className="text-black">Unggah File</option>
               </select>
             </div>
 
-            {questionType === 'ya_tidak' && (
+
+            {questionType === 'ya-tidak-draft' && (
               <div className="mb-4">
                 <label className="block mb-1">Contoh Tampilan Jawaban</label>
                 <div className="flex gap-4">
@@ -119,9 +136,21 @@ function ManageQuestionsPage() {
                   </label>
                   <label className="inline-flex items-center">
                     <input type="radio" disabled className="mr-2" />
+                    Draft (dalam proses)
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input type="radio" disabled className="mr-2" />
                     Tidak
                   </label>
                 </div>
+              </div>
+            )}
+
+            {questionType === 'unggah_file' && (
+              <div className="mb-4">
+                <label className="block mb-1 text-white">Contoh Tampilan Jawaban</label>
+                <input type="file" disabled className="block text-sm text-white" />
+                <p className="text-xs text-gray-300 mt-1">* Ukuran minimal: 10MB</p>
               </div>
             )}
 
