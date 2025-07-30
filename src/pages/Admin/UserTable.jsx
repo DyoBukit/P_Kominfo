@@ -8,7 +8,7 @@ function UserTable({ users, onDelete, onEdit }) {
         <thead className="bg-white/10">
           <tr>
             <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
-              ID
+              No
             </th>
             <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
               Username
@@ -16,23 +16,23 @@ function UserTable({ users, onDelete, onEdit }) {
             <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
               Email
             </th>
-            {/* >>>>>> PERBAIKAN: Hapus kolom Role dari header <<<<<< */}
-            {/* <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
-              Role
-            </th> */}
+            <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
+              OPD
+            </th>
             <th scope="col" className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
               Actions
             </th>
           </tr>
         </thead>
         <tbody className="bg-transparent divide-y divide-gray-700">
-          {users.map(user => (
+          {users.map((user, index) => (
             <tr key={user.id} className="hover:bg-white/5 transition-colors duration-200">
-              <td className="px-6 py-4 whitespace-nowrap text-gray-100">{user.id}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-gray-100">{index + 1}</td>
               <td className="px-6 py-4 whitespace-nowrap text-gray-100">{user.username}</td>
               <td className="px-6 py-4 whitespace-nowrap text-gray-100">{user.email}</td>
-              {/* >>>>>> PERBAIKAN: Hapus kolom Role dari body <<<<<< */}
-              {/* <td className="px-6 py-4 whitespace-nowrap text-gray-100">{user.role}</td> */}
+              <td className="px-6 py-4 whitespace-nowrap text-gray-100">
+                {user.opd || <span className="text-gray-400 italic">Tidak ada</span>}
+              </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <button
                   onClick={() => onEdit(user)}
@@ -40,19 +40,12 @@ function UserTable({ users, onDelete, onEdit }) {
                 >
                   Edit
                 </button>
-                <button
-                  onClick={() => onDelete(user.id)}
-                  className="bg-red-600/50 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-600/70 transition-colors duration-300 border border-red-600/70"
-                >
-                  Delete
-                </button>
               </td>
             </tr>
           ))}
           {users.length === 0 && (
             <tr>
-              {/* >>>>>> PERBAIKAN: colSpan disesuaikan menjadi 4 <<<<<< */}
-              <td colSpan="4" className="px-6 py-8 text-center text-gray-400 text-lg">
+              <td colSpan="5" className="px-6 py-8 text-center text-gray-400 text-lg">
                 No users found.
               </td>
             </tr>

@@ -1,19 +1,43 @@
 // src/pages/Admin/DashboardAdmin.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar';
-import { useAuth } from '../../contexts/AuthContext'; 
+import { useAuth } from '../../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import backgroundImage from '../../assets/bg.png';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+import api from '../../utils/Api'; // pastikan file ini ada
 
-import backgroundImage from '../../assets/bg.png'; 
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 function DashboardAdmin() {
   const { user, logout } = useAuth();
+  const [opdData, setOpdData] = useState([]);
+
+  useEffect(() => {
+    const fetchOpdCounts = async () => {
+      try {
+        const response = await api.get('/admin/opd-statistics'); // sesuaikan endpoint dari backend
+        // Contoh response: { data: [{ opd: 'Dinas A', total: 4 }, { opd: 'Dinas B', total: 7 }] }
+        setOpdData(response.data);
+      } catch (error) {
+        console.error('Gagal mengambil data OPD:', error);
+      }
+    };
+    fetchOpdCounts();
+  }, []);
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col"> 
-      {/* Layer Background Blur */}
-      <div 
-        className="absolute inset-0 z-0" 
+    <div className="relative min-h-screen w-full flex flex-col">
+      {/* Background */}
+      <div
+        className="absolute inset-0 z-0"
         style={{
           backgroundImage: `url(${backgroundImage})`,
           backgroundSize: 'cover',
@@ -22,48 +46,80 @@ function DashboardAdmin() {
           backgroundAttachment: 'fixed',
         }}
       >
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div> 
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
       </div>
 
-      {/* Layer Konten (Navbar & Main) - tetap tajam di atas blur */}
-      <div className="relative z-10 flex-grow flex flex-col py-6"> 
+      {/* Konten */}
+      <div className="relative z-10 flex-grow flex flex-col justify-start items-center">
         <Navbar role="admin" />
-        <main className="flex-grow p-8 md:p-12 max-w-6xl mx-auto w-full"> 
+        <main className="p-8 md:p-12 max-w-6xl mx-auto w-full">
           <h1 className="py-4 text-4xl md:text-5xl font-bold text-white mb-10 text-center">
-            Welcome, <span className="text-blue-400">{user?.username || 'Admin'}</span>! 
+            Welcome, <span className="text-blue-400">{user?.username || 'Admin'}</span>!
           </h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
+
+          {/* Cards Fitur */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
             <Link
               to="/admin/users"
-              className="bg-white/10 p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center transform transition-transform duration-300 hover:scale-105 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20" 
+              className="bg-white/10 p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center transform transition-transform duration-300 hover:scale-105 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-300 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              <h3 className="text-white text-2xl font-bold mt-4">Manage Users</h3> 
-              <p className="text-gray-200 mt-2 text-lg">Add, edit, or remove user accounts.</p> 
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+              <h3 className="text-2xl font-bold mt-4">Manage Users</h3>
+              <p className="text-gray-200 mt-2 text-lg">Add, edit, or remove user accounts.</p>
             </Link>
+
             <Link
               to="/admin/forms"
-              className="bg-white/10 p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center transform transition-transform duration-300 hover:scale-105 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20" 
+              className="bg-white/10 p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center transform transition-transform duration-300 hover:scale-105 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-300 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 9h6"/></svg>
-              <h3 className="text-white text-2xl font-bold mt-4">Manage Evaluation Forms</h3> 
-              <p className="text-gray-200 mt-2 text-lg">Create, view, and manage evaluation forms.</p> 
-            </Link>
-            {/* Mengarahkan ke halaman statistik baru */}
-            <Link // <--- PERBAIKAN: Komentar dipindahkan ke atas Link
-              to="/admin/charts" 
-              className="bg-white/10 p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center transform transition-transform duration-300 hover:scale-105 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20" 
-            >
-              {/* Ikon untuk Statistik (contoh: ikon chart) */}
               <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                <path d="M14.5 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7.5L14.5 2z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 9h6"/>
               </svg>
-              <h3 className="text-white text-2xl font-bold mt-4">View Statistics</h3> 
-              <p className="text-gray-200 mt-2 text-lg">See evaluation data distribution.</p> 
+              <h3 className="text-2xl font-bold mt-4">Result of Evaluation Forms</h3>
+              <p className="text-gray-200 mt-2 text-lg">Create, view, and manage evaluation forms.</p>
             </Link>
+
+            <Link
+              to="/admin/forms/manage/:id"
+              className="bg-white/10 p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center transform transition-transform duration-300 hover:scale-105 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+              </svg>
+              <h3 className="text-2xl font-bold mt-4">Manage Questions</h3>
+              <p className="text-gray-200 mt-2 text-lg">Add, edit, or delete form questions.</p>
+            </Link>
+
           </div>
-          
+
+          {/* Chart Pie */}
+          <div className="bg-white/10 rounded-xl p-6 text-white shadow-lg border border-white/20 backdrop-blur-sm">
+            {opdData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={opdData}
+                    dataKey="total"
+                    nameKey="opd"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label
+                  >
+                    {opdData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-center text-gray-300">Belum ada data OPD yang tersedia.</p>
+            )}
+          </div>
         </main>
       </div>
     </div>

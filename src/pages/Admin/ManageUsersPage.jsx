@@ -23,13 +23,15 @@ function ManageUsersPage() {
   const [fetchError, setFetchError] = useState(null); 
 
   const [editingUser, setEditingUser] = useState(null); 
-
+  const [newOpd, setNewOpd] = useState('');
+  
   const resetFormFields = () => {
     setNewUsername('');
     setNewEmail('');
     setNewPassword('');
     setConfirmPassword(''); 
     setNewRole('user'); 
+    setNewOpd('');
     setFormError('');
   };
 
@@ -58,6 +60,7 @@ function ManageUsersPage() {
     setNewPassword(''); 
     setConfirmPassword(''); 
     setNewRole('user'); 
+    setNewOpd(userToEdit.opd || '');
     setFormError(''); 
   };
 
@@ -92,7 +95,8 @@ function ManageUsersPage() {
         name: newUsername,
         username: newUsername,
         email: newEmail,
-        role: 'user', 
+        role: 'user',
+        opd: newOpd, 
       };
       if (newPassword) { 
         updatedUserData.password = newPassword;
@@ -137,6 +141,7 @@ function ManageUsersPage() {
         password: newPassword, 
         password_confirmation: confirmPassword,
         role: 'user', 
+        opd: newOpd,
       });
 
       alert('Pengguna berhasil ditambahkan!');
@@ -224,6 +229,14 @@ function ManageUsersPage() {
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
               placeholder="e.g., john@example.com"
+            />
+            <InputField
+              label="OPD"
+              type="text"
+              id="newOpd"
+              value={newOpd}
+              onChange={(e) => setNewOpd(e.target.value)}
+              placeholder="Masukkan nama OPD, contoh: Dinas Pendidikan"
             />
             <InputField
               label="Password" 

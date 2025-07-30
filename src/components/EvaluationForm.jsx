@@ -1,47 +1,25 @@
 // src/components/EvaluationForm.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../utils/Api"; // Pastikan path ini benar
+import api from "../utils/Api";
 import ErrorMessage from "./ErrorMessage";
-import { FiPaperclip } from "react-icons/fi";
 import logo from "../assets/logoform.jpg";
-
-// Opsi statis untuk dropdown, karena tidak ada di DB
-const opdOptions = [
-  "Inspektorat Daerah",
-  "Sekretariat Daerah",
-  "BPKAD",
-  "BAPPEDA",
-  "BKPSDM",
-  "BPPRD",
-  "DISDUKCAPIL",
-  "Dinas Perpustakaan dan Arsip Daerah",
-  "DPMPTSP",
-  "DINKES",
-  "DISKOMINFO",
-  "Bag. Hukum Setda",
-  "Bag. Organisasi Setda",
-  "Bag. Pengadaan Barang dan Jasa Setda",
-];
 
 function EvaluationForm() {
   const navigate = useNavigate();
   const [questions, setQuestions] = useState([]);
-  // State answers sekarang akan menggunakan ID pertanyaan sebagai kunci: { '1': 'jawaban', '2': 'jawaban lain' }
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitError, setSubmitError] = useState("");
 
-  // 1. Mengambil pertanyaan dari backend
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
         const response = await api.get("/questions");
         setQuestions(response.data);
-        // Inisialisasi state answers berdasarkan ID pertanyaan
         const initialAnswers = {};
         response.data.forEach((q) => {
-          initialAnswers[q.id] = ""; // Gunakan ID sebagai kunci
+          initialAnswers[q.id] = "";
         });
         setAnswers(initialAnswers);
       } catch (err) {
@@ -54,7 +32,6 @@ function EvaluationForm() {
     fetchQuestions();
   }, []);
 
-  // 2. Menangani perubahan pada setiap input
   const handleChange = (questionId, value) => {
     setAnswers((prev) => ({
       ...prev,
@@ -62,7 +39,6 @@ function EvaluationForm() {
     }));
   };
 
-  // 3. Mengirim semua data ke backend saat form di-submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -93,45 +69,26 @@ function EvaluationForm() {
     }
   };
 
-  // Tampilan saat loading
   if (loading) {
     return <div className="text-center text-white p-10">Memuat formulir...</div>;
   }
+
   if (submitError && questions.length === 0) {
     return <div className="text-center text-red-500 p-10">{submitError}</div>;
   }
 
-  // Fungsi untuk me-render input yang sesuai berdasarkan tipe pertanyaan
-  const renderQuestion = (q) => {
-    // Render dropdown khusus untuk pertanyaan pertama (Pilih OPD)
-    if (q.id === 1) {
-      return (
-        <div>
-          <label
-            htmlFor={`question_${q.id}`}
-            className="block font-medium text-gray-800 mb-2"
-          >
-            {q.question_text}
-          </label>
-          <select
-            id={`question_${q.id}`}
-            value={answers[q.id] || ""}
-            onChange={(e) => handleChange(q.id, e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg"
-          >
-            <option value="" disabled>
-              Pilih salah satu...
-            </option>
-            {opdOptions.map((opt, index) => (
-              <option key={index} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-        </div>
-      );
-    }
+  // Urutkan agar pertanyaan "nama" muncul lebih dulu
+  const pertanyaanNama = questions.find((q) =>
+    q.question_text.toLowerCase().includes("nama")
+  );
+  const pertanyaanLain = questions.filter(
+    (q) => !q.question_text.toLowerCase().includes("nama")
+  );
+  const orderedQuestions = pertanyaanNama
+    ? [pertanyaanNama, ...pertanyaanLain]
+    : questions;
 
+  const renderQuestion = (q) => {
     switch (q.type) {
       case "multiple_choice":
         return (
@@ -172,7 +129,7 @@ function EvaluationForm() {
               id={`question_${q.id}`}
               value={answers[q.id] || ""}
               onChange={(e) => handleChange(q.id, e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg min-h-[100px]"
+              className="w-full border border-gray-300 rounded-lg resize-none"
             />
           </div>
         );
@@ -223,7 +180,7 @@ function EvaluationForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {questions.map((q) => (
+        {orderedQuestions.map((q) => (
           <div key={q.id}>{renderQuestion(q)}</div>
         ))}
 
