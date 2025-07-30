@@ -2,59 +2,81 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../utils/Api';
 import Navbar from '../../components/Navbar';
-import backgroundImage from '../../assets/bg.png';
 import InputField from '../../components/InputField';
+import ErrorMessage from '../../components/ErrorMessage';
+import backgroundImage from '../../assets/bg.png';
 import { useNavigate } from 'react-router-dom';
 
 function ManageQuestionsPage() {
+  const navigate = useNavigate();
   const [questions, setQuestions] = useState([]);
   const [newQuestion, setNewQuestion] = useState('');
   const [description, setDescription] = useState('');
   const [questionType, setQuestionType] = useState('isian');
   const [category, setCategory] = useState('');
-  const navigate = useNavigate();
+  const [error, setError] = useState('');
+  const [editingQuestionId, setEditingQuestionId] = useState(null);
 
   const fetchQuestions = async () => {
     try {
-      const response = await api.get('/admin/evaluation-questions');
-      setQuestions(response.data);
+      const response = await api.get('/admin/forms/1');
+      setQuestions(response.data.questions);
     } catch (error) {
       console.error('Gagal mengambil data pertanyaan:', error);
-    }
-  };
-
-  const handleAddQuestion = async (e) => {
-    e.preventDefault();
-    try {
-      await api.post('/forms/{form}/questions', {
-        question: newQuestion,
-        description,
-        type: questionType,
-        category,
-      });
-      fetchQuestions();
-      setNewQuestion('');
-      setDescription('');
-      setQuestionType('isian');
-      setCategory('');
-    } catch (error) {
-      console.error('Gagal menambahkan pertanyaan:', error);
-    }
-  };
-
-  const handleDeleteQuestion = async (id) => {
-    if (!window.confirm('Yakin ingin menghapus pertanyaan ini?')) return;
-    try {
-      await api.delete(`/admin/evaluation-questions/${id}`);
-      fetchQuestions();
-    } catch (error) {
-      console.error('Gagal menghapus pertanyaan:', error);
     }
   };
 
   useEffect(() => {
     fetchQuestions();
   }, []);
+
+  const handleAddOrEditQuestion = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingQuestionId) {
+        await api.put(`/admin/questions/${editingQuestionId}`, {
+          question: newQuestion,
+          description,
+          type: questionType,
+          category,
+        });
+      } else {
+        await api.post('/admin/forms/1/questions', {
+          question: newQuestion,
+          description,
+          type: questionType,
+          category,
+        });
+      }
+      setEditingQuestionId(null);
+      setNewQuestion('');
+      setDescription('');
+      setQuestionType('isian');
+      setCategory('');
+      setError('');
+      fetchQuestions();
+    } catch (error) {
+      setError('Gagal menyimpan pertanyaan');
+    }
+  };
+
+  const handleDeleteQuestion = async (id) => {
+    if (!window.confirm('Yakin ingin menghapus pertanyaan ini?')) return;
+    try {
+      await api.delete(`/admin/questions/${id}`);
+      fetchQuestions();
+    } catch (error) {
+      console.error('Gagal menghapus pertanyaan:', error);
+    }
+  };
+
+  const startEditing = (question) => {
+    setEditingQuestionId(question.id);
+    setNewQuestion(question.question);
+    setDescription(question.description || '');
+    setQuestionType(question.type);
+    setCategory(question.category);
+  };
 
   const handleGoBack = () => {
     navigate('/admin/dashboard'); 
@@ -92,7 +114,7 @@ function ManageQuestionsPage() {
           </h1>
 
           <form
-            onSubmit={handleAddQuestion}
+            onSubmit={handleAddOrEditQuestion}
             className="bg-white/10 p-8 rounded-xl shadow-2xl mb-10 backdrop-blur-lg border border-white/20"
           >
             <InputField
@@ -111,6 +133,14 @@ function ManageQuestionsPage() {
               onChange={(e) => setDescription(e.target.value)}
             />
 
+            <InputField
+              label="Kategori (Opsional)"
+              type="text"
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            />
+
             <div className="mb-4">
               <label htmlFor="questionType" className="block mb-1 text-white">Jenis Pertanyaan</label>
               <select
@@ -120,11 +150,10 @@ function ManageQuestionsPage() {
                 onChange={(e) => setQuestionType(e.target.value)}
               >
                 <option value="isian" className="text-black">Isian</option>
-                <option value="ya_tidak" className="text-black">Ya/Tidak/Draft(dalam proses)</option>
+                <option value="ya-tidak-draft" className="text-black">Ya/Tidak/Draft(dalam proses)</option>
                 <option value="unggah_file" className="text-black">Unggah File</option>
               </select>
             </div>
-
 
             {questionType === 'ya-tidak-draft' && (
               <div className="mb-4">
@@ -158,7 +187,7 @@ function ManageQuestionsPage() {
               type="submit"
               className="bg-blue-600 text-white py-3 px-6 rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-lg mt-4"
             >
-              Tambah Pertanyaan
+              {editingQuestionId ? 'Simpan Perubahan' : 'Tambah Pertanyaan'}
             </button>
           </form>
 
@@ -171,12 +200,20 @@ function ManageQuestionsPage() {
                   {q.description && <p className="text-sm italic text-gray-300">{q.description}</p>}
                   <p className="text-sm text-gray-400">Jenis: {q.type} | Kategori: {q.category}</p>
                 </div>
-                <button
-                  onClick={() => handleDeleteQuestion(q.id)}
-                  className="bg-red-500 hover:bg-red-600 text-white py-1 px-4 rounded-full"
-                >
-                  Hapus
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => startEditing(q)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-4 rounded-full"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteQuestion(q.id)}
+                    className="bg-red-500 hover:bg-red-600 text-white py-1 px-4 rounded-full"
+                  >
+                    Hapus
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
