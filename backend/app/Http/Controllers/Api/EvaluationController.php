@@ -10,6 +10,8 @@ use App\Models\Answer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Form;
+use App\Exports\EvaluationsExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class EvaluationController extends Controller
 {
@@ -95,5 +97,20 @@ class EvaluationController extends Controller
         }
 
         return response()->json($activeForm);
+    }
+
+    public function export()
+    {
+        $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $fileName = 'Form-' . now()->format('Y-m-d-His') . '.xlsx';
+
+        return Excel::download(new EvaluationsExport($startDate, $endDate), $fileName);
     }
 }
