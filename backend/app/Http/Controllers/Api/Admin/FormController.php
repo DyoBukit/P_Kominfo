@@ -14,7 +14,7 @@ class FormController extends Controller
      */
     public function index()
     {
-        return From::withCount('questions')->latest()->get();
+        return Form::withCount('questions')->latest()->get();
     }
 
     public function store(Request $request)
@@ -63,6 +63,6 @@ class FormController extends Controller
     public function removeQuestion(Question $question)
     {
         $question->delete();
-        return response()->jsos(['message' => 'Pertanyaan berhasil dihapus'], 201);
+        return response()->json(['message' => 'Pertanyaan berhasil dihapus'], 201);
     }
 }

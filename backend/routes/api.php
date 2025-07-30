@@ -36,4 +36,5 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function(){
     Route::post('/forms/{form}/questions', [FormController::class, 'addQuestion']);
     Route::put('/questions/{question}', [FormController::class, 'updateQuestion']);
     Route::delete('/questions/{question}', [FormController::class, 'removeQuestion']);
+    Route::get('/evaluations/export', [App\Http\Controllers\Api\EvaluationController::class, 'export']);
 });
