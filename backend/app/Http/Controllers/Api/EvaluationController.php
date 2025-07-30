@@ -99,7 +99,7 @@ class EvaluationController extends Controller
         return response()->json($activeForm);
     }
 
-    public function export()
+    public function export(Request $request)
     {
         $request->validate([
             'start_date' => 'nullable|date',

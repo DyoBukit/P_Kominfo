@@ -11,30 +11,42 @@ use Illuminate\Support\Facades\DB;
 class EvaluationsExport implements FromQuery, WithHeadings, WithMapping
 {
     protected $startDate;
-    protected $onDate;
+    protected $endDate;
 
-    public function __construct($startDate, $onDate)
+    // Menggunakan nama variabel yang konsisten: $endDate
+    public function __construct($startDate, $endDate)
     {
         $this->startDate = $startDate;
-        $this->onDate = $onDate;
+        $this->endDate = $endDate;
     }
+
+    /**
+     * Mendefinisikan query ke database dengan filter tanggal.
+     */
     public function query()
     {
         $query = Evaluation::query()
-            ->with(['user', 'answers.questions'])
-            ->select('evaluations');
+            // Menggunakan relasi yang benar: answers.question (tunggal)
+            ->with(['user', 'answers.question'])
+            // Menggunakan select yang benar
+            ->select('evaluations.*');
 
-        if($this->startDate && this->endDate) {
-            $query->whereBeetwen('evaluations.created_at', [$this->startDate. $this->endDate]);
+        // Menggunakan nama variabel dan method yang benar
+        if ($this->startDate && $this->endDate) {
+            $query->whereBetween('evaluations.created_at', [$this->startDate, $this->endDate]);
         }
         
         return $query;
     }
 
-    public function heading (): array
+    /**
+     * Mendefinisikan judul kolom untuk file Excel.
+     * Nama method yang benar adalah headings() (dengan 's').
+     */
+    public function headings(): array
     {
         return [
-            'No',
+            'ID Evaluasi',
             'Nama Lengkap',
             'Email',
             'OPD',
@@ -44,27 +56,37 @@ class EvaluationsExport implements FromQuery, WithHeadings, WithMapping
         ];
     }
 
-    public function map ($evaluation) : array 
+    /**
+     * Memetakan setiap data evaluasi menjadi baris-baris di Excel.
+     * Satu evaluasi bisa menjadi beberapa baris, tergantung jumlah jawabannya.
+     */
+    public function map($evaluation): array
     {
         $rows = [];
+        
+        // Cari jawaban untuk pertanyaan OPD (asumsi question_id = 1)
+        $opdAnswer = $evaluation->answers->firstWhere('question_id', 1);
+        $opdName = $opdAnswer ? $opdAnswer->answer_value : 'N/A';
 
         if ($evaluation->answers->isEmpty()) {
+            // Jika tidak ada jawaban, tetap tampilkan satu baris info evaluasi
             $rows[] = [
                 $evaluation->id,
                 $evaluation->user->name ?? 'N/A',
                 $evaluation->user->email ?? 'N/A',
-                $evaluation->user->OPD ?? 'N/A',
+                $opdName,
                 $evaluation->created_at->format('Y-m-d H:i:s'),
-                '-',
-                '-',
+                '-- Tidak ada jawaban --',
+                '',
             ];
-         } else {
-foreach ($evaluation->answers as $answer) {
+        } else {
+            // Buat satu baris untuk setiap jawaban
+            foreach ($evaluation->answers as $answer) {
                 $rows[] = [
                     $evaluation->id,
                     $evaluation->user->name ?? 'N/A',
                     $evaluation->user->email ?? 'N/A',
-                    $evaluation->user->OPD ?? 'N/A',
+                    $opdName,
                     $evaluation->created_at->format('Y-m-d H:i:s'),
                     $answer->question->question_text ?? 'Pertanyaan tidak ditemukan',
                     $answer->answer_value,
@@ -75,4 +97,3 @@ foreach ($evaluation->answers as $answer) {
         return $rows;
     }
 }
-
