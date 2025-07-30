@@ -11,12 +11,13 @@ import DashboardAdmin from './pages/Admin/DashboardAdmin';
 import ManageUsersPage from './pages/Admin/ManageUsersPage';
 import FormTable from './pages/Admin/FormTable';
 import EvaluationDetailPage from './pages/Admin/EvaluationDetailPage';
+import ManageQuestionsPage from './pages/Admin/ManageQuestionPage';
 import AdminChartsPage from './pages/Admin/AdminChartsPage'; // <--- IMPORT HALAMAN CHART BARU
 
 // Import halaman User
 import DashboardUser from './pages/User/DashboardUser';
 import FormEvaluasiPage from './pages/User/FormEvaluasiPage';
-import EndPage from './pages/User/EndPage';
+import EndPage from './pages/User/EndPage'; 
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             <Route path="/admin/forms" element={<FormTable />} />
             <Route path="/admin/forms/view/:id" element={<EvaluationDetailPage />} />
             <Route path="/admin/charts" element={<AdminChartsPage />} />
+            <Route path="/admin/forms/manage/:id" element={<ManageQuestionsPage />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['user']} />}>

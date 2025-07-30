@@ -13,10 +13,11 @@ const InputField = ({ label, type = 'text', id, value, onChange, placeholder, er
     transition-all duration-300
   `;
   
-  const errorClass = error ? 'border-red-500' : ''; // Border merah untuk error
+  const errorClass = error ? 'border-red-500' : '';
 
-  // Gabungkan kelas default dengan kelas yang diberikan via prop `className`
-  const finalInputClasses = `${defaultInputClasses} ${errorClass} ${className || ''} ${type === 'textarea' ? 'min-h-[100px] resize-y' : ''}`;
+  const finalInputClasses = `${type === 'textarea'
+  ? 'w-full bg-gray-700 rounded-xl p-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none shadow-sm'
+  : defaultInputClasses} ${errorClass} ${className || ''}`;
 
   const InputComponent = type === 'textarea' ? 'textarea' : 'input';
 

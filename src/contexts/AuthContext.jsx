@@ -12,8 +12,8 @@ export const AuthProvider = ({ children }) => {
 
   // useEffect untuk memuat status autentikasi dari sessionStorage saat aplikasi pertama kali dimuat
   useEffect(() => {
-    const storedToken = sessionStorage.getItem('token');
-    const storedUser = sessionStorage.getItem('user');
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
       const userObject = JSON.parse(storedUser);
@@ -41,8 +41,8 @@ export const AuthProvider = ({ children }) => {
       const { access_token, user: userData } = response.data;
 
       // >>> PERBAIKAN: Simpan token dan data user ke sessionStorage <<<
-      sessionStorage.setItem('token', access_token);
-      sessionStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('user', JSON.stringify(userData));
       
       // Perbarui state aplikasi
       setToken(access_token);
@@ -71,8 +71,8 @@ export const AuthProvider = ({ children }) => {
       console.error("Panggilan API logout gagal, tetap melanjutkan logout di sisi klien:", error);
     } finally {
 
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       
       setToken(null);
       setUser(null);
