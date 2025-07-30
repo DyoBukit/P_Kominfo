@@ -9,6 +9,7 @@ use App\Models\Evaluation;
 use App\Models\Answer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Form;
 
 class EvaluationController extends Controller
 {
@@ -35,7 +36,11 @@ class EvaluationController extends Controller
             'user_id' => Auth::id(),
             'form_title' => $request->form_title,
             'status' => 'completed',
+
+            
         ]);
+
+        
 
         // --- PERBAIKAN UTAMA DI SINI ---
         foreach ($request->answers as $questionId => $answerValue){
@@ -79,5 +84,16 @@ class EvaluationController extends Controller
         // Muat relasi jawaban beserta pertanyaan terkait
         $evaluation->load('answers.question');
         return response()->json($evaluation);
+    }
+
+    public function getActiveForm()
+    {
+        $activeForm = Form::where('is_active', true)->with('questions')->first();
+
+        if (!$activeForm) {
+            return response()->json(['message' => 'Saat ini tidak ada form evaluasi yang aktif.'], 404);
+        }
+
+        return response()->json($activeForm);
     }
 }

@@ -6,13 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Question extends Model
 {
-    protected $fillable = ['evaluation_id', 'question_id', 'answer_value'];
+    use HasFactory;
+    protected $fillable = ['question_text', 'category', 'type'];
 
-    public function evaluation() {
-        return $this->belongsTo(Evaluation::class);
-}
-
-    public function question() {
-        return $this->belongsTo(Question::class);
+    public function forms() {
+        return $this->belongsToMany(Form::class);
 }
 }

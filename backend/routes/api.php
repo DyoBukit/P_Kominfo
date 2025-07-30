@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Admin\Auth\LoginController as AdminLoginController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\EvaluationController;
+use App\Http\Controllers\Api\Admin\FormController;
 use App\Models\Evaluation;
 
 require __DIR__.'/auth.php';
@@ -26,11 +27,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::middleware('auth:sanctum')->group(function (){
-    Route::get('/questions', [EvaluationController::class, 'getQuestions']);
+    Route::get('forms/active', [EvaluationController::class, 'getActiveForm']);
     Route::post('/evaluations', [EvaluationController::class, 'store']);
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function(){
-    Route::get('/evaluations', [EvaluationController::class, 'index']);
-    Route::get('/evaluations/{evaluation}', [EvaluationController::class, 'show']);
+    Route::apiResource('forms', FormController::class);
+    Route::post('/forms/{form}/questions', [FormController::class, 'addQuestion']);
+    Route::put('/questions/{question}', [FormController::class, 'updateQuestion']);
+    Route::delete('/questions/{question}', [FormController::class, 'removeQuestion']);
 });
