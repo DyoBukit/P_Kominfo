@@ -17,7 +17,7 @@ class UserController extends Controller
     public function index()
     {
         // Mengambil semua user dengan peran 'user', diurutkan dari yang terbaru.
-        $users = User::where('role', 'user')->latest()->get();
+        $users = User::where('role', 'user')->latest()->paginate(5);
         return response()->json($users);
     }
 

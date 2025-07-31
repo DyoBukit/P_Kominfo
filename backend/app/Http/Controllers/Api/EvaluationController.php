@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Form;
 use App\Exports\EvaluationsExport;
 use Maatwebsite\Excel\Facades\Excel;
-
+use Illuminate\Support\Facades\DB;
 class EvaluationController extends Controller
 {
     /**
@@ -74,7 +74,7 @@ class EvaluationController extends Controller
      */
     public function index()
     {
-        $evaluations = Evaluation::with('user:id,name,username')->latest()->get();
+        $evaluations = Evaluation::with('user:id,name,username')->latest()->pagination(10);
         return response()->json($evaluations);
     }
 
