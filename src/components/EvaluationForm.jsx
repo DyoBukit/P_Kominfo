@@ -15,7 +15,7 @@ function EvaluationForm() {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await api.get("/questions");
+        const response = await api.get("/forms/active");
         setQuestions(response.data);
         const initialAnswers = {};
         response.data.forEach((q) => {

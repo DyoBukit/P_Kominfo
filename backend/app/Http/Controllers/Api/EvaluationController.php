@@ -78,7 +78,7 @@ class EvaluationController extends Controller
         return response()->json($evaluations);
     }
 
-    /**
+    /** 
      * Menampilkan detail satu hasil evaluasi (untuk Admin).
      */
     public function show(Evaluation $evaluation)

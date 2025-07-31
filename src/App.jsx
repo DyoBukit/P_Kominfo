@@ -31,7 +31,7 @@ function App() {
             <Route path="/admin/dashboard" element={<DashboardAdmin />} />
             <Route path="/admin/users" element={<ManageUsersPage />} />
             <Route path="/admin/forms" element={<FormTable />} />
-            <Route path="/admin/forms/view/:id" element={<EvaluationDetailPage />} />
+            <Route path="/admin/forms/view" element={<EvaluationDetailPage />} />
             <Route path="/admin/charts" element={<AdminChartsPage />} />
             <Route path="/admin/forms/create" element={<ManageQuestionsPage />} />
           </Route>

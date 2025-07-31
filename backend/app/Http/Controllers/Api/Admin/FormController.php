@@ -77,22 +77,34 @@ class FormController extends Controller
             // 'description' dan 'category' bisa divalidasi jika kolomnya sudah ada
             'description' => 'nullable|string',
             'category' => 'nullable|string',
+            'options' => 'required_if:type_multiple_choice|array|min:1',
+            'options.*' => 'required|string',
         ]);
-        
-        // 3. Buat pertanyaan baru dengan data yang sudah disesuaikan untuk DB
-        $question = Question::create([
-            'question_text' => $validated['question'], // Mapping 'question' -> 'question_text'
-            'type' => $validated['type'], // Langsung gunakan tipe dari frontend
-            // Tambahkan baris ini jika Anda sudah memperbaiki migrasi
-            // 'description' => $validated['description'],
-            // 'category' => $validated['category'],
-        ]);
-        
-        // 4. Lampirkan pertanyaan ke form menggunakan tabel penghubung
+
+        DB::beginTransaction();
+        try {
+            $question = Question::create([
+                'question_text' => $validated['question'],
+                'type' => $validated['type'],
+            ]);
+            if ($validated['type'] === 'multiple_choice' && !empty($validated['options'])) {
+                foreach ($validated['options'] as $optionText) {
+                    $question->options()->create([
+                        'option_text' => $optionText,
+                    ]);
+                }
+        }
         $form->questions()->attach($question->id);
 
-        return response()->json($question, 201);
+        DB::commit();
+
+        return response()->json($question->load('options'), 201);
+    } catch (\Exception $e) {
+            DB::rollBack(); // Batalkan semua jika ada error
+            return response()->json(['message' => 'Gagal menyimpan pertanyaan.', 'error' => $e->getMessage()], 500);
+        }
     }
+
 
     /**
      * Mengupdate pertanyaan yang sudah ada.

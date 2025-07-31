@@ -19,28 +19,20 @@ use App\Http\Controllers\Api\EvaluationController;
 // === RUTE AUTENTIKASI UMUM ===
 require __DIR__.'/auth.php';
 
-// === RUTE ADMIN ===
+
 Route::prefix('admin')->name('admin.')->group(function() {
     // Rute publik untuk admin (login)
     Route::post('login', [AdminLoginController::class, 'login']);
 
-    // Grup rute yang dilindungi middleware untuk admin
+    
     Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::post('logout', [AdminLoginController::class, 'logout']);
-
-        // Dashboard & Statistics
-        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-        Route::get('opd-statistics', [DashboardController::class, 'getStatistics']); // RUTE YANG HILANG
-
-        // User Management
         Route::apiResource('users', AdminUserController::class);
-
         // Form & Question Management
         Route::apiResource('forms', FormController::class);
         Route::post('forms/{form}/questions', [FormController::class, 'addQuestion']);
         Route::put('questions/{question}', [FormController::class, 'updateQuestion']);
         Route::delete('questions/{question}', [FormController::class, 'removeQuestion']);
-
         // Evaluation Export
         Route::get('evaluations/export', [EvaluationController::class, 'export']);
     });

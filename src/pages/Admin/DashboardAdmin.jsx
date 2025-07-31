@@ -71,7 +71,7 @@ function DashboardAdmin() {
             </Link>
 
             <Link
-              to="/admin/forms"
+              to="/admin/forms/view/:id"
               className="bg-white/10 p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center transform transition-transform duration-300 hover:scale-105 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -94,32 +94,6 @@ function DashboardAdmin() {
 
           </div>
 
-          {/* Chart Pie */}
-          <div className="bg-white/10 rounded-xl p-6 text-white shadow-lg border border-white/20 backdrop-blur-sm">
-            {opdData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={opdData}
-                    dataKey="total"
-                    nameKey="opd"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label
-                  >
-                    {opdData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-center text-gray-300">Belum ada data OPD yang tersedia.</p>
-            )}
-          </div>
         </main>
       </div>
     </div>
