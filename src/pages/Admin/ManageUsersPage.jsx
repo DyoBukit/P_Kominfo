@@ -40,7 +40,15 @@ function ManageUsersPage() {
     setFetchError(null);
     try {
       const response = await api.get('/admin/users'); 
-      setUsers(response.data); 
+      const usersData = Array.isArray(response.data.data) ? response.data.data : response.data;
+      
+      if (Array.isArray(usersData)) {
+        setUsers(usersData);
+      } else {
+        console.error("Data pengguna yang diterima bukan array:", response.data);
+        setUsers([]); // Set ke array kosong untuk mencegah crash
+      }
+
     } catch (err) {
       console.error("Gagal mengambil data pengguna:", err.response ? err.response.data : err.message);
       setFetchError(`Gagal memuat pengguna: ${err.response?.data?.message || err.message || 'Server tidak merespons.'}`);

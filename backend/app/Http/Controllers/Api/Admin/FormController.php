@@ -7,6 +7,7 @@ use App\Models\Form;
 use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class FormController extends Controller
 {
@@ -77,7 +78,7 @@ class FormController extends Controller
             // 'description' dan 'category' bisa divalidasi jika kolomnya sudah ada
             'description' => 'nullable|string',
             'category' => 'nullable|string',
-            'options' => 'required_if:type_multiple_choice|array|min:1',
+            'options' => 'required_if:type,multiple_choice|array|min:1',
             'options.*' => 'required|string',
         ]);
 
@@ -119,6 +120,8 @@ class FormController extends Controller
             ],
             'description' => 'nullable|string',
             'category' => 'nullable|string',
+            'options' => 'required_if:type,multiple_choice|array|min:1',
+            'options.*' => 'required|string',
         ]);
         
         $question->update([

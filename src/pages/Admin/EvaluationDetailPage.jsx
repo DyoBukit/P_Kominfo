@@ -22,7 +22,7 @@ function EvaluationDetailPage() {
         // --- PERBAIKAN UTAMA DI SINI ---
         // 1. Ganti 'evaluations' menjadi 'evaluasi'
         // 2. Ganti '{evaluation}' dengan id dinamis dari useParams()
-        const response = await api.get(`/admin/evaluations/${id}`);
+        const response = await api.get(`/admin/evaluations/export`);
         setEvaluation(response.data);
       } catch (err) {
         console.error("Gagal mengambil detail evaluasi:", err.response ? err.response.data : err.message);

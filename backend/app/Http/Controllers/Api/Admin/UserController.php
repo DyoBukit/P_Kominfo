@@ -16,7 +16,6 @@ class UserController extends Controller
      */
     public function index()
     {
-        // Mengambil semua user dengan peran 'user', diurutkan dari yang terbaru.
         $users = User::where('role', 'user')->latest()->paginate(5);
         return response()->json($users);
     }
@@ -30,6 +29,7 @@ class UserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:'.User::class],
+            'opd' => ['required', 'string', 'max:255'], // <-- PERBAIKAN 1
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
@@ -39,12 +39,12 @@ class UserController extends Controller
             'name' => $request->name,
             'username' => $request->username,
             'email' => $request->email,
+            'opd' => $request->opd, // <-- PERBAIKAN 2
             'password' => Hash::make($request->password),
-            'role' => 'user', // Otomatis set peran sebagai 'user'
+            'role' => 'user',
         ]);
 
-        // Kembalikan respons sukses dengan data user yang baru dibuat
-        return response()->json($user, 201); // 201 = Created
+        return response()->json($user, 201);
     }
 
     /**
@@ -60,23 +60,20 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        // --- PERBAIKAN DI SINI ---
-        // Hasil validasi harus disimpan ke dalam variabel $validatedData
         $validatedData = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'username' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'opd' => ['sometimes', 'nullable', 'string', 'max:255'], // <-- PERBAIKAN 3
             'email' => ['sometimes', 'required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => ['sometimes', 'nullable', 'same:password_confirmation', Rules\Password::defaults()],
+            'password' => ['sometimes', 'nullable', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Jika ada password baru yang dikirim, update passwordnya
-         if ($request->filled('password')) {
+        if ($request->filled('password')) {
             $validatedData['password'] = Hash::make($validatedData['password']);
         }
-        // Simpan perubahan ke database
+        
         $user->update($validatedData);  
 
-        // Kembalikan respons sukses dengan data user yang sudah diupdate
         return response()->json($user);
     }
 
@@ -85,15 +82,12 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        // Tambahan keamanan: Pastikan admin tidak bisa menghapus akunnya sendiri.
         if ($user->id === auth()->id()) {
-            return response()->json(['message' => 'Anda tidak dapat menghapus akun Anda sendiri.'], 403); // 403 = Forbidden
+            return response()->json(['message' => 'Anda tidak dapat menghapus akun Anda sendiri.'], 403);
         }
         
-        // Hapus user dari database
         $user->delete();
 
-        // Kembalikan respons sukses tanpa konten
-        return response()->json(['message' => 'Data berhasil dihapus!'], 201); // 204 = No Content
+        return response()->json(['message' => 'Data berhasil dihapus!'], 200);
     }
 }

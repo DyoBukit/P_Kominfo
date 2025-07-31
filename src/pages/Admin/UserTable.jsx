@@ -31,7 +31,7 @@ function UserTable({ users, onDelete, onEdit }) {
               <td className="px-6 py-4 whitespace-nowrap text-gray-100">{user.username}</td>
               <td className="px-6 py-4 whitespace-nowrap text-gray-100">{user.email}</td>
               <td className="px-6 py-4 whitespace-nowrap text-gray-100">
-                {user.opd || <span className="text-gray-400 italic">Tidak ada</span>}
+                {user.OPD}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <button

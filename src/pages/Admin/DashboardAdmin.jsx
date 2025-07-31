@@ -18,20 +18,6 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 function DashboardAdmin() {
   const { user, logout } = useAuth();
-  const [opdData, setOpdData] = useState([]);
-
-  useEffect(() => {
-    const fetchOpdCounts = async () => {
-      try {
-        const response = await api.get('/admin/opd-statistics'); // sesuaikan endpoint dari backend
-        // Contoh response: { data: [{ opd: 'Dinas A', total: 4 }, { opd: 'Dinas B', total: 7 }] }
-        setOpdData(response.data);
-      } catch (error) {
-        console.error('Gagal mengambil data OPD:', error);
-      }
-    };
-    fetchOpdCounts();
-  }, []);
 
   return (
     <div className="relative min-h-screen w-full flex flex-col">
@@ -71,7 +57,7 @@ function DashboardAdmin() {
             </Link>
 
             <Link
-              to="/admin/forms/view/:id"
+              to="/admin/form"
               className="bg-white/10 p-8 rounded-xl shadow-xl flex flex-col items-center justify-center text-center transform transition-transform duration-300 hover:scale-105 hover:bg-white/20 text-white backdrop-blur-sm border border-white/20"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-blue-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -35,6 +35,7 @@ Route::prefix('admin')->name('admin.')->group(function() {
         Route::delete('questions/{question}', [FormController::class, 'removeQuestion']);
         // Evaluation Export
         Route::get('evaluations/export', [EvaluationController::class, 'export']);
+        Route::get('evaluations', [EvaluationController::class, 'show']);
     });
 });
 

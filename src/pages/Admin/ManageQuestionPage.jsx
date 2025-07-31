@@ -104,13 +104,14 @@ function ManageQuestionsPage() {
   };
 
   const startEditing = (question) => {
+    console.log("Data pertanyaan yang akan diedit:", question); 
     setEditingQuestionId(question.id);
     setNewQuestion(question.question_text); // Sesuaikan dengan nama kolom DB
     setDescription(question.description || '');
     setQuestionType(question.type);
     setCategory(question.category || '');
     
-    if (question.type === 'multiple_choice' && question.options.length > 0) {
+    if (question.type === 'multiple_choice' && question.options && question.options.length > 0) {
       setOptions(question.options.map(opt => opt.option_text));
     } else {
       setOptions(['']);
@@ -142,7 +143,10 @@ function ManageQuestionsPage() {
       <div className="relative z-10 flex-grow flex flex-col py-6">
         <Navbar role="admin" />
         <main className="flex-grow p-8 md:p-12 max-w-4xl mx-auto w-full">
-          <button onClick={() => navigate('/admin/forms')} className="mb-6 flex items-center text-gray-100 px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 transition duration-300 border border-white/20">
+          <button onClick={() => navigate('/admin/dashboard')} className="mb-6 flex items-center text-gray-100 px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 transition duration-300 border border-white/20">
+            Kembali ke Dashboard
+          </button>
+          <button onClick={() => navigate('/admin/view')} className="mb-6 flex items-center text-gray-100 px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 transition duration-300 border border-white/20">
             Kembali ke Daftar Form
           </button>
           
