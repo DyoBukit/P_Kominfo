@@ -33,7 +33,7 @@ function App() {
             <Route path="/admin/forms" element={<FormTable />} />
             <Route path="/admin/forms/view/:id" element={<EvaluationDetailPage />} />
             <Route path="/admin/charts" element={<AdminChartsPage />} />
-            <Route path="/admin/forms/manage/:id" element={<ManageQuestionsPage />} />
+            <Route path="/admin/forms/create" element={<ManageQuestionsPage />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['user']} />}>

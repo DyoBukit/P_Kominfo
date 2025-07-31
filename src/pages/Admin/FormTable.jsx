@@ -1,45 +1,33 @@
+// src/pages/Admin/FormTable.jsx
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom'; // Import Link
 import Navbar from '../../components/Navbar';
-import { useNavigate } from 'react-router-dom';
-import ErrorMessage from '../../components/ErrorMessage';
 import api from '../../utils/Api';
 import backgroundImage from '../../assets/bg.png';
 
 function FormTable() {
   const navigate = useNavigate();
-  const [forms, setForms] = useState([]);
-  const [fetchError, setFetchError] = useState(null);
+  const [forms, setForms] = useState([]); // State ini akan berisi daftar form template
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [lastPage, setLastPage] = useState(1);
-
-  const fetchForms = async () => {
-    setLoading(true);
-    setFetchError(null);
-    try {
-      const response = await api.get(`/admin/evaluations?page=${page}&search=${search}`);
-      setForms(response.data.data);
-      setLastPage(response.data.last_page);
-    } catch (err) {
-      setFetchError("Gagal memuat data evaluasi.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
+    const fetchForms = async () => {
+      setLoading(true);
+      try {
+        // 1. Mengambil data dari endpoint /admin/forms, bukan /evaluations
+        const response = await api.get('/admin/forms'); 
+        setForms(response.data); // Asumsi response.data adalah array of forms
+      } catch (err) {
+        setError("Gagal memuat data form. Pastikan backend berjalan.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchForms();
-  }, [page, search]);
-
-  const handleViewEvaluation = (id) => {
-    navigate(`/admin/forms/view/${id}`);
-  };
-
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-    setPage(1); // reset ke page 1 saat pencarian
-  };
+  }, []);
 
   const handleGoBack = () => {
     navigate('/admin/dashboard'); 
@@ -73,74 +61,51 @@ function FormTable() {
             Kembali ke Dashboard
           </button>
           <div className="mb-6 flex justify-between items-center">
-            <h1 className="text-3xl md:text-4xl font-bold text-white">Evaluation Forms</h1>
-            <input
-              type="text"
-              placeholder="Cari nama, email, OPD..."
-              value={search}
-              onChange={handleSearchChange}
-              className="px-4 py-2 rounded-md bg-white/10 text-white placeholder-white/50 border border-white/20 focus:outline-none"
-            />
+            <h1 className="text-3xl md:text-4xl font-bold text-white">Kelola Form Evaluasi</h1>
+            {/* Anda bisa menambahkan tombol "Buat Form Baru" di sini nanti */}
           </div>
 
           {loading ? (
-            <p className="text-white">Memuat data...</p>
-          ) : fetchError ? (
-            <ErrorMessage message={fetchError} />
+            <p className="text-white text-center">Memuat data...</p>
+          ) : error ? (
+            <p className="text-red-400 text-center">{error}</p>
           ) : (
             <div className="overflow-x-auto bg-white/10 rounded-xl shadow-xl border border-white/20 backdrop-blur">
               <table className="min-w-full divide-y divide-gray-700">
                 <thead className="bg-white/10">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-white">No</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-white">Nama User</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-white">Email</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-white">OPD</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-white">Tanggal</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-white">Action</th>
+                    {/* 2. Mengubah kolom tabel agar sesuai untuk form template */}
+                    <th className="px-4 py-3 text-left text-xs font-bold text-white">ID</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-white">Judul Form</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-white">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-white">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800">
-                  {forms.length > 0 ? forms.map((form, index) => (
+                  {forms.length > 0 ? forms.map((form) => (
                     <tr key={form.id} className="hover:bg-white/5">
-                      <td className="px-4 py-3 text-white">{(page - 1) * 10 + index + 1}</td>
-                      <td className="px-4 py-3 text-white">{form.user?.name || '-'}</td>
-                      <td className="px-4 py-3 text-white">{form.user?.email || '-'}</td>
-                      <td className="px-4 py-3 text-white">{form.status}</td>
-                      <td className="px-4 py-3 text-white">{new Date(form.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-white">{form.id}</td>
+                      <td className="px-4 py-3 text-white">{form.title}</td>
+                      <td className="px-4 py-3 text-white">{form.is_active ? 'Aktif' : 'Tidak Aktif'}</td>
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleViewEvaluation(form.id)}
+                        {/* 3. INI ADALAH LINK DINAMIS YANG BENAR */}
+                        <Link
+                          to={`/admin/manage-questions/${form.id}`}
                           className="bg-blue-600/70 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 border border-blue-700"
                         >
-                          Lihat
-                        </button>
+                          Kelola Pertanyaan
+                        </Link>
                       </td>
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan="6" className="text-white text-center py-6">Tidak ada data ditemukan</td>
+                      <td colSpan="4" className="text-white text-center py-6">Tidak ada form yang dibuat.</td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
           )}
-
-          {/* Pagination */}
-          <div className="flex justify-center mt-6 space-x-2">
-            {Array.from({ length: lastPage }, (_, i) => (
-              <button
-                key={i + 1}
-                onClick={() => setPage(i + 1)}
-                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                  page === i + 1 ? 'bg-blue-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
         </main>
       </div>
     </div>

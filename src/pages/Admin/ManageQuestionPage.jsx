@@ -1,14 +1,21 @@
 // src/pages/Admin/ManageQuestionsPage.jsx
+
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../utils/Api';
 import Navbar from '../../components/Navbar';
 import InputField from '../../components/InputField';
-import ErrorMessage from '../../components/ErrorMessage';
 import backgroundImage from '../../assets/bg.png';
-import { useNavigate } from 'react-router-dom';
 
+// Nama fungsi bisa diubah agar lebih jelas, misal: CreateAndManageFormPage
 function ManageQuestionsPage() {
   const navigate = useNavigate();
+
+  // STATE BARU: untuk menyimpan data form yang baru saja dibuat
+  const [createdForm, setCreatedForm] = useState(null); // Mulai dari null
+
+  // State yang sudah ada, ditambah state untuk judul form
+  const [formTitle, setFormTitle] = useState(''); 
   const [questions, setQuestions] = useState([]);
   const [newQuestion, setNewQuestion] = useState('');
   const [description, setDescription] = useState('');
@@ -17,36 +24,46 @@ function ManageQuestionsPage() {
   const [error, setError] = useState('');
   const [editingQuestionId, setEditingQuestionId] = useState(null);
 
+  // Fungsi untuk mengambil pertanyaan (hanya berjalan jika form sudah dibuat)
   const fetchQuestions = async () => {
+    if (!createdForm) return; // Jangan lakukan apa-apa jika form belum ada
     try {
-      const response = await api.get('/admin/forms/1');
-      setQuestions(response.data.questions);
+      const response = await api.get(`/admin/forms/${createdForm.id}`);
+      setQuestions(response.data.questions || []);
     } catch (error) {
       console.error('Gagal mengambil data pertanyaan:', error);
     }
   };
 
-  useEffect(() => {
-    fetchQuestions();
-  }, []);
-
+  // FUNGSI BARU: untuk membuat 'cangkang' form (hanya judulnya)
+  const handleCreateForm = async (e) => {
+    e.preventDefault();
+    if (!formTitle) {
+      setError('Judul form tidak boleh kosong.');
+      return;
+    }
+    try {
+      setError('');
+      const response = await api.post('/admin/forms', { title: formTitle });
+      setCreatedForm(response.data); // Simpan data form yang baru (termasuk ID baru)
+    } catch (err) {
+      setError('Gagal membuat form baru.');
+      console.error(err);
+    }
+  };
+  
+  // Fungsi ini sekarang menggunakan ID dari 'createdForm'
   const handleAddOrEditQuestion = async (e) => {
     e.preventDefault();
+    if (!createdForm) return; // Guard clause
+
+    const payload = { question: newQuestion, description, type: questionType, category };
+
     try {
       if (editingQuestionId) {
-        await api.put(`/admin/questions/${editingQuestionId}`, {
-          question: newQuestion,
-          description,
-          type: questionType,
-          category,
-        });
+        await api.put(`/admin/questions/${editingQuestionId}`, payload);
       } else {
-        await api.post('/admin/forms/1/questions', {
-          question: newQuestion,
-          description,
-          type: questionType,
-          category,
-        });
+        await api.post(`/admin/forms/${createdForm.id}/questions`, payload);
       }
       setEditingQuestionId(null);
       setNewQuestion('');
@@ -56,7 +73,8 @@ function ManageQuestionsPage() {
       setError('');
       fetchQuestions();
     } catch (error) {
-      setError('Gagal menyimpan pertanyaan');
+      setError('Gagal menyimpan pertanyaan.');
+      console.error(error);
     }
   };
 
@@ -75,148 +93,73 @@ function ManageQuestionsPage() {
     setNewQuestion(question.question);
     setDescription(question.description || '');
     setQuestionType(question.type);
-    setCategory(question.category);
-  };
-
-  const handleGoBack = () => {
-    navigate('/admin/dashboard'); 
+    setCategory(question.category || '');
+    window.scrollTo(0, 200);
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col">
-      <div 
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed',
-        }}
-      >
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
-      </div>
-
+    <div className="relative min-h-screen w-full flex flex-col" style={{ backgroundImage: `url(${backgroundImage})`}}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
       <div className="relative z-10 flex-grow flex flex-col py-6">
         <Navbar role="admin" />
         <main className="flex-grow p-8 md:p-12 max-w-4xl mx-auto w-full">
-          <button
-            onClick={handleGoBack}
-            className="mb-6 flex items-center text-gray-100 px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 transition duration-300 border border-white/20"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Kembali ke Dashboard
+          <button onClick={() => navigate('/admin/forms')} className="mb-6 ...">
+            {/* ... SVG ... */}
+            Kembali ke Daftar Form
           </button>
-          <h1 className="text-4xl font-bold text-white mb-8 text-center">
-            Kelola <span className="text-blue-400">Pertanyaan Evaluasi</span>
-          </h1>
+          
+          {/* TAMPILAN KONDISIONAL */}
+          {!createdForm ? (
+            // TAHAP 1: Membuat Judul Form
+            <form onSubmit={handleCreateForm} className="bg-white/10 p-8 rounded-xl ...">
+              <h1 className="text-4xl font-bold text-white mb-8 text-center">Buat Form Evaluasi Baru</h1>
+              <InputField
+                label="Judul Form"
+                type="text"
+                value={formTitle}
+                onChange={(e) => setFormTitle(e.target.value)}
+                placeholder="Contoh: Form Evaluasi Kinerja 2025"
+                required
+              />
+              <button type="submit" className="w-full bg-blue-600 text-white ...">
+                Simpan Judul & Mulai Tambah Pertanyaan
+              </button>
+              {error && <p className="text-red-400 mt-4">{error}</p>}
+            </form>
+          ) : (
+            // TAHAP 2: Mengelola Pertanyaan (setelah form dibuat)
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-8 text-center">
+                Tambah Pertanyaan untuk <br/> <span className="text-blue-400">{createdForm.title}</span>
+              </h1>
+              <form onSubmit={handleAddOrEditQuestion} className="bg-white/10 p-8 rounded-xl ...">
+                <InputField label="Pertanyaan" type="text" value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} required />
+                <InputField label="Deskripsi (Opsional)" type="text" value={description} onChange={(e) => setDescription(e.target.value)} />
+                <InputField label="Kategori (Opsional)" type="text" value={category} onChange={(e) => setCategory(e.target.value)} />
+                <div className="mb-4">
+                  <label htmlFor="questionType" className="block mb-1 text-white">Jenis Pertanyaan</label>
+                  <select id="questionType" value={questionType} onChange={(e) => setQuestionType(e.target.value)} className="w-full ...">
+                    <option value="essay" className="text-black">Text</option>
+                    <option value="multiple_choice" className="text-black">Pilihan Ganda</option>
+                    <option value="file" className="text-black">Unggah File</option>
+                  </select>
+                </div>
+                <button type="submit" className="bg-blue-600 ...">
+                  {editingQuestionId ? 'Simpan Perubahan' : 'Tambah Pertanyaan'}
+                </button>
+                {error && <p className="text-red-400 mt-4">{error}</p>}
+              </form>
 
-          <form
-            onSubmit={handleAddOrEditQuestion}
-            className="bg-white/10 p-8 rounded-xl shadow-2xl mb-10 backdrop-blur-lg border border-white/20"
-          >
-            <InputField
-              label="Pertanyaan"
-              type="text"
-              id="question"
-              value={newQuestion}
-              onChange={(e) => setNewQuestion(e.target.value)}
-              required
-            />
-            <InputField
-              label="Deskripsi (Opsional)"
-              type="text"
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-
-            <InputField
-              label="Kategori (Opsional)"
-              type="text"
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            />
-
-            <div className="mb-4">
-              <label htmlFor="questionType" className="block mb-1 text-white">Jenis Pertanyaan</label>
-              <select
-                id="questionType"
-                className="w-full p-2 mb-3 border border-white/20 rounded text-white"
-                value={questionType}
-                onChange={(e) => setQuestionType(e.target.value)}
-              >
-                <option value="isian" className="text-black">Isian</option>
-                <option value="ya-tidak-draft" className="text-black">Ya/Tidak/Draft(dalam proses)</option>
-                <option value="unggah_file" className="text-black">Unggah File</option>
-              </select>
+              <h2 className="text-2xl font-semibold text-white mt-10 mb-4">Daftar Pertanyaan</h2>
+              <ul className="space-y-4">
+                {questions.map((q) => (
+                  <li key={q.id} className="bg-white/10 p-4 rounded-md ...">
+                    {/* ... (isi list item) ... */}
+                  </li>
+                ))}
+              </ul>
             </div>
-
-            {questionType === 'ya-tidak-draft' && (
-              <div className="mb-4">
-                <label className="block mb-1">Contoh Tampilan Jawaban</label>
-                <div className="flex gap-4">
-                  <label className="inline-flex items-center">
-                    <input type="radio" disabled className="mr-2" />
-                    Ya
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input type="radio" disabled className="mr-2" />
-                    Draft (dalam proses)
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input type="radio" disabled className="mr-2" />
-                    Tidak
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {questionType === 'unggah_file' && (
-              <div className="mb-4">
-                <label className="block mb-1 text-white">Contoh Tampilan Jawaban</label>
-                <input type="file" disabled className="block text-sm text-white" />
-                <p className="text-xs text-gray-300 mt-1">* Ukuran minimal: 10MB</p>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="bg-blue-600 text-white py-3 px-6 rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-lg mt-4"
-            >
-              {editingQuestionId ? 'Simpan Perubahan' : 'Tambah Pertanyaan'}
-            </button>
-          </form>
-
-          <h2 className="text-2xl font-semibold text-white mb-4">Daftar Pertanyaan</h2>
-          <ul className="space-y-4">
-            {questions.map((q) => (
-              <li key={q.id} className="bg-white/10 p-4 rounded-md text-white flex justify-between items-center border border-white/10">
-                <div>
-                  <p className="font-semibold">{q.question}</p>
-                  {q.description && <p className="text-sm italic text-gray-300">{q.description}</p>}
-                  <p className="text-sm text-gray-400">Jenis: {q.type} | Kategori: {q.category}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => startEditing(q)}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-4 rounded-full"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteQuestion(q.id)}
-                    className="bg-red-500 hover:bg-red-600 text-white py-1 px-4 rounded-full"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+          )}
         </main>
       </div>
     </div>
