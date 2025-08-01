@@ -1,37 +1,66 @@
 // src/pages/Admin/ManageQuestionsPage.jsx
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom'; 
 import api from '../../utils/Api';
 import Navbar from '../../components/Navbar';
 import InputField from '../../components/InputField';
+import ErrorMessage from '../../components/ErrorMessage'; 
 import backgroundImage from '../../assets/bg.png';
 
 function ManageQuestionsPage() {
   const navigate = useNavigate();
-
+  const { id } = useParams(); 
   const [createdForm, setCreatedForm] = useState(null);
   const [formTitle, setFormTitle] = useState(''); 
   const [questions, setQuestions] = useState([]);
   const [newQuestion, setNewQuestion] = useState('');
   const [description, setDescription] = useState('');
-  const [questionType, setQuestionType] = useState('essay'); // Ubah default ke 'essay'
+  const [questionType, setQuestionType] = useState('essay');
   const [category, setCategory] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true); 
   const [editingQuestionId, setEditingQuestionId] = useState(null);
 
-  /* === STATE BARU UNTUK OPSI === */
-  const [options, setOptions] = useState(['']); // Mulai dengan satu opsi kosong
+  const [options, setOptions] = useState(['']);
 
-  const fetchQuestions = async () => {
-    if (!createdForm) return;
+  const fetchQuestions = async (formId) => {
     try {
-      const response = await api.get(`/admin/forms/${createdForm.id}`);
+      const response = await api.get(`/admin/forms/${formId}`);
       setQuestions(response.data.questions || []);
+      if (!formTitle) {
+        setFormTitle(response.data.title);
+      }
     } catch (error) {
       console.error('Gagal mengambil data pertanyaan:', error);
+      setError('Gagal memuat pertanyaan untuk form ini.');
     }
   };
+
+  useEffect(() => {
+    const loadForm = async () => {
+      setLoading(true);
+      if (id) {
+        try {
+          const response = await api.get(`/admin/forms/${id}`);
+          setCreatedForm(response.data); 
+          setFormTitle(response.data.title); 
+          await fetchQuestions(id); 
+        } catch (err) {
+          console.error("Gagal memuat form untuk diedit:", err);
+          setError(`Gagal memuat form: ${err.response?.data?.message || err.message}`);
+          setCreatedForm(null); 
+        }
+      } else {
+        setCreatedForm(null);
+        setFormTitle('');
+        setQuestions([]);
+      }
+      setLoading(false);
+    };
+
+    loadForm();
+  }, [id]);
 
   const handleCreateForm = async (e) => {
     e.preventDefault();
@@ -43,6 +72,7 @@ function ManageQuestionsPage() {
       setError('');
       const response = await api.post('/admin/forms', { title: formTitle });
       setCreatedForm(response.data);
+      await fetchQuestions(response.data.id); 
     } catch (err) {
       setError('Gagal membuat form baru.');
       console.error(err);
@@ -51,7 +81,10 @@ function ManageQuestionsPage() {
   
   const handleAddOrEditQuestion = async (e) => {
     e.preventDefault();
-    if (!createdForm) return;
+    if (!createdForm) {
+      setError('Silakan buat atau pilih form terlebih dahulu.');
+      return;
+    }
 
     const payload = { 
       question: newQuestion, 
@@ -60,9 +93,7 @@ function ManageQuestionsPage() {
       category 
     };
 
-    /* === TAMBAHKAN OPSI KE PAYLOAD JIKA TIPE ADALAH PILIHAN GANDA === */
     if (questionType === 'multiple_choice') {
-      // Filter opsi yang kosong
       const filledOptions = options.filter(opt => opt.trim() !== '');
       if (filledOptions.length < 1) {
         setError('Pilihan ganda harus memiliki setidaknya satu opsi.');
@@ -77,36 +108,38 @@ function ManageQuestionsPage() {
       } else {
         await api.post(`/admin/forms/${createdForm.id}/questions`, payload);
       }
-      
-      // Reset form
+
       setEditingQuestionId(null);
       setNewQuestion('');
       setDescription('');
       setQuestionType('essay');
       setCategory('');
-      setOptions(['']); // Reset opsi
+      setOptions(['']); 
       setError('');
-      fetchQuestions();
-    } catch (error) {
+      await fetchQuestions(createdForm.id);
+    } catch (err) {
       setError('Gagal menyimpan pertanyaan. Periksa kembali data Anda.');
-      console.error(error);
+      console.error(err.response?.data || err.message);
     }
   };
 
-  const handleDeleteQuestion = async (id) => {
-    if (!window.confirm('Yakin ingin menghapus pertanyaan ini?')) return;
+  const handleDeleteQuestion = async (qId) => {
+    const confirmed = window.confirm('Yakin ingin menghapus pertanyaan ini?'); // TODO: Ganti dengan modal kustom
+    if (!confirmed) return;
+
     try {
-      await api.delete(`/admin/questions/${id}`);
-      fetchQuestions();
-    } catch (error) {
-      console.error('Gagal menghapus pertanyaan:', error);
+      await api.delete(`/admin/questions/${qId}`);
+      await fetchQuestions(createdForm.id);
+    } catch (err) {
+      console.error('Gagal menghapus pertanyaan:', err.response?.data || err.message);
+      setError('Gagal menghapus pertanyaan.');
     }
   };
 
   const startEditing = (question) => {
     console.log("Data pertanyaan yang akan diedit:", question); 
     setEditingQuestionId(question.id);
-    setNewQuestion(question.question_text); // Sesuaikan dengan nama kolom DB
+    setNewQuestion(question.question_text);
     setDescription(question.description || '');
     setQuestionType(question.type);
     setCategory(question.category || '');
@@ -120,7 +153,6 @@ function ManageQuestionsPage() {
     window.scrollTo(0, 200);
   };
 
-  /* === FUNGSI-FUNGSI BARU UNTUK MENGELOLA OPSI === */
   const handleOptionChange = (index, value) => {
     const newOptions = [...options];
     newOptions[index] = value;
@@ -132,10 +164,19 @@ function ManageQuestionsPage() {
   };
 
   const removeOption = (index) => {
-    if (options.length <= 1) return; // Sisakan minimal satu
+    if (options.length <= 1) return;
     const newOptions = options.filter((_, i) => i !== index);
     setOptions(newOptions);
   };
+
+  if (loading) {
+    return (
+      <div className="relative min-h-screen w-full flex items-center justify-center" style={{ backgroundImage: `url(${backgroundImage})`}}>
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+        <p className="relative z-10 text-white text-xl">Memuat form...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen w-full flex flex-col" style={{ backgroundImage: `url(${backgroundImage})`}}>
@@ -146,7 +187,7 @@ function ManageQuestionsPage() {
           <button onClick={() => navigate('/admin/dashboard')} className="mb-6 flex items-center text-gray-100 px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 transition duration-300 border border-white/20">
             Kembali ke Dashboard
           </button>
-          <button onClick={() => navigate('/admin/view')} className="mb-6 flex items-center text-gray-100 px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 transition duration-300 border border-white/20">
+          <button onClick={() => navigate('/admin/forms')} className="mb-6 flex items-center text-gray-100 px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 transition duration-300 border border-white/20">
             Kembali ke Daftar Form
           </button>
           
@@ -164,7 +205,7 @@ function ManageQuestionsPage() {
               <button type="submit" className="w-full mt-4 bg-blue-600 text-white py-3 px-6 rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-lg">
                 Simpan Judul & Mulai Tambah Pertanyaan
               </button>
-              {error && <p className="text-red-400 mt-4">{error}</p>}
+              {error && <ErrorMessage message={error} />}
             </form>
           ) : (
             <div>
@@ -184,7 +225,6 @@ function ManageQuestionsPage() {
                   </select>
                 </div>
 
-                {/* === UI KONDISIONAL UNTUK OPSI PILIHAN GANDA === */}
                 {questionType === 'multiple_choice' && (
                   <div className="mt-4 p-4 border border-white/20 rounded-md">
                     <label className="block mb-2 text-white font-semibold">Opsi Jawaban</label>
@@ -219,7 +259,7 @@ function ManageQuestionsPage() {
                 <button type="submit" className="w-full mt-6 bg-blue-600 text-white py-3 px-6 rounded-full font-semibold hover:bg-blue-700 transition duration-300 shadow-lg">
                   {editingQuestionId ? 'Simpan Perubahan' : 'Tambah Pertanyaan'}
                 </button>
-                {error && <p className="text-red-400 mt-4 text-center">{error}</p>}
+                {error && <ErrorMessage message={error} />}
               </form>
 
               <h2 className="text-2xl font-semibold text-white mt-10 mb-4">Daftar Pertanyaan</h2>

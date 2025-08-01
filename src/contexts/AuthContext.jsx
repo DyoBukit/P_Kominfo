@@ -62,25 +62,33 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    const endpoint = user?.role === 'admin' ? '/admin/logout' : '/logout';
-    
-    try {
-      await api.post(endpoint);
-      console.log('Token berhasil dibatalkan di server.');
-    } catch (error) {
-      console.error("Panggilan API logout gagal, tetap melanjutkan logout di sisi klien:", error);
-    } finally {
-
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+    if (token) {
+      const endpoint = user?.role === 'admin' ? '/admin/logout' : '/logout';
       
-      setToken(null);
-      setUser(null);
-      setIsAuthenticated(false);
-
-      delete api.defaults.headers.common['Authorization'];
-      console.log('Logout berhasil, sesi klien dibersihkan.');
+      try {
+        await api.post(endpoint);
+        console.log('Token berhasil dibatalkan di server.');
+      } catch (error) {
+        if (error.response && error.response.status === 401) {
+          console.log("Token sudah expired, logout di sisi klien tetap dilanjutkan.");
+        } else {
+          console.error("Panggilan API logout gagal, tetap melanjutkan logout di sisi klien:", error);
+        }
+      }
+    } else {
+        console.log("Tidak ada token, melanjutkan logout di sisi klien.");
     }
+
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+      
+    setToken(null);
+    setUser(null);
+    setIsAuthenticated(false);
+
+    delete api.defaults.headers.common['Authorization'];
+    console.log('Logout berhasil, sesi klien dibersihkan.');
+    
   };
 
   // Nilai yang akan disediakan oleh Context Provider

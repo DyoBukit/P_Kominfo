@@ -7,7 +7,8 @@ import logo from "../assets/logoform.jpg";
 
 function EvaluationForm() {
   const navigate = useNavigate();
-  const [questions, setQuestions] = useState([]);
+  // Simpan seluruh objek form aktif
+  const [activeForm, setActiveForm] = useState(null); 
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitError, setSubmitError] = useState("");
@@ -15,15 +16,25 @@ function EvaluationForm() {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
+        // Ambil seluruh objek form aktif dari backend
         const response = await api.get("/forms/active");
-        setQuestions(response.data);
+        const form = response.data;
+        
+        setActiveForm(form); // Simpan seluruh objek form
+        
+        // Inisialisasi state answers
         const initialAnswers = {};
-        response.data.forEach((q) => {
+        form.questions.forEach((q) => {
           initialAnswers[q.id] = "";
         });
         setAnswers(initialAnswers);
       } catch (err) {
-        setSubmitError("Gagal memuat pertanyaan. Pastikan backend berjalan.");
+        // Jika tidak ada form aktif, backend akan merespons 404
+        if (err.response && err.response.status === 404) {
+          setSubmitError("Saat ini tidak ada form evaluasi yang aktif.");
+        } else {
+          setSubmitError("Gagal memuat pertanyaan. Pastikan backend berjalan.");
+        }
         console.error("Fetch questions error:", err);
       } finally {
         setLoading(false);
@@ -44,8 +55,16 @@ function EvaluationForm() {
     setLoading(true);
     setSubmitError("");
 
+    if (!activeForm) {
+      setSubmitError("Tidak ada form yang aktif untuk dikirim.");
+      setLoading(false);
+      return;
+    }
+
     const submissionData = new FormData();
-    submissionData.append("form_title", "Evaluasi SPBE 2024");
+    // Gunakan judul form dari state, bukan hardcoded
+    submissionData.append("form_title", activeForm.title); 
+    submissionData.append("form_id", activeForm.id);
 
     for (const questionId in answers) {
       if (answers[questionId]) {
@@ -61,7 +80,7 @@ function EvaluationForm() {
     } catch (err) {
       setSubmitError(
         err.response?.data?.message ||
-          "Gagal mengirim form. Mohon periksa kembali isian Anda."
+        "Gagal mengirim form. Mohon periksa kembali isian Anda."
       );
       console.error("Submit error:", err);
     } finally {
@@ -73,11 +92,15 @@ function EvaluationForm() {
     return <div className="text-center text-white p-10">Memuat formulir...</div>;
   }
 
-  if (submitError && questions.length === 0) {
+  // Jika tidak ada form aktif, tampilkan pesan
+  if (!activeForm) {
     return <div className="text-center text-red-500 p-10">{submitError}</div>;
   }
+  
+  // Ambil pertanyaan dari state activeForm
+  const questions = activeForm.questions || [];
 
-  // Urutkan agar pertanyaan "nama" muncul lebih dulu
+  // Urutkan agar pertanyaan "nama" muncul lebih dulu (opsional, tapi logika sudah ada)
   const pertanyaanNama = questions.find((q) =>
     q.question_text.toLowerCase().includes("nama")
   );
@@ -97,21 +120,26 @@ function EvaluationForm() {
               {q.question_text}
             </p>
             <div className="flex space-x-4">
-              {["Ya", "Draft (dalam proses)", "Tidak"].map((opt) => (
-                <label
-                  key={opt}
-                  className="flex items-center space-x-2 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name={`question_${q.id}`}
-                    value={opt}
-                    checked={answers[q.id] === opt}
-                    onChange={(e) => handleChange(q.id, e.target.value)}
-                  />
-                  <span>{opt}</span>
-                </label>
-              ))}
+              {/* Render opsi secara dinamis dari backend */}
+              {q.options && q.options.length > 0 ? (
+                q.options.map((opt) => (
+                  <label
+                    key={opt.id}
+                    className="flex items-center space-x-2 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name={`question_${q.id}`}
+                      value={opt.option_text}
+                      checked={answers[q.id] === opt.option_text}
+                      onChange={(e) => handleChange(q.id, e.target.value)}
+                    />
+                    <span>{opt.option_text}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="text-red-500">Opsi tidak ditemukan.</p>
+              )}
             </div>
           </div>
         );
@@ -171,8 +199,9 @@ function EvaluationForm() {
           className="mt-4 rounded-lg mx-auto"
           style={{ maxWidth: "300px" }}
         />
+        {/* Tampilkan judul form dari state */}
         <h1 className="text-2xl font-bold mt-4 mb-2">
-          EVALUASI SPBE TAHUN 2024
+          {activeForm.title}
         </h1>
         <p className="text-gray-500 text-sm">
           Formulir Upload Data Dukung Evaluasi Mandiri

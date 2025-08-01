@@ -102,10 +102,10 @@ function FormTable() {
               <table className="min-w-full divide-y divide-gray-700">
                 <thead className="bg-white/10">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase">ID</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase">User ID</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase">Title</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase">Status</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase">No</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase">Nama</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase">Email</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase">OPD</th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase">Tanggal Dibuat</th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase">Actions</th>
                   </tr>

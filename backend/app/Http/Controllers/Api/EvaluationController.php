@@ -31,15 +31,15 @@ class EvaluationController extends Controller
     {
         $request->validate([
             'form_title' => 'required|string',
-            'answers' => 'required|array'
+            'answers' => 'required|array',
+            'form_id' => 'required|exists:forms,id'
         ]);
 
         $evaluation = Evaluation::create([
             'user_id' => Auth::id(),
             'form_title' => $request->form_title,
             'status' => 'completed',
-
-            
+            'form_id' => $request->form_id
         ]);
 
         
@@ -74,7 +74,7 @@ class EvaluationController extends Controller
      */
     public function index()
     {
-        $evaluations = Evaluation::with('user:id,name,username')->latest()->pagination(10);
+        $evaluations = Evaluation::with('user:id,name,username')->latest()->paginate(10);
         return response()->json($evaluations);
     }
 
@@ -90,7 +90,7 @@ class EvaluationController extends Controller
 
     public function getActiveForm()
     {
-        $activeForm = Form::where('is_active', true)->with('questions')->first();
+        $activeForm = Form::where('is_active', true)->with(['questions.options'])->first();
 
         if (!$activeForm) {
             return response()->json(['message' => 'Saat ini tidak ada form evaluasi yang aktif.'], 404);

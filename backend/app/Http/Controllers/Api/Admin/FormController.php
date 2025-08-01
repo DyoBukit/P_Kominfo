@@ -142,4 +142,19 @@ class FormController extends Controller
         $question->delete();
         return response()->json(['message' => 'Pertanyaan berhasil dihapus'], 200);
     }
+
+    public function toggleIsActive(Form $form)
+    {
+        // Periksa apakah ada form lain yang aktif
+        if (!$form->is_active) {
+            // Jika form ini akan diaktifkan, pastikan semua form lain dinonaktifkan
+            Form::where('is_active', true)->update(['is_active' => false]);
+        }
+        
+        // Toggle status is_active
+        $form->is_active = !$form->is_active;
+        $form->save();
+
+        return response()->json($form, 200);
+    }
 }

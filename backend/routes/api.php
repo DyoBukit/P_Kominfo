@@ -33,9 +33,10 @@ Route::prefix('admin')->name('admin.')->group(function() {
         Route::post('forms/{form}/questions', [FormController::class, 'addQuestion']);
         Route::put('questions/{question}', [FormController::class, 'updateQuestion']);
         Route::delete('questions/{question}', [FormController::class, 'removeQuestion']);
+        Route::patch('forms/{form}/toggle-active', [FormController::class, 'toggleIsActive']);
         // Evaluation Export
         Route::get('evaluations/export', [EvaluationController::class, 'export']);
-        Route::get('evaluations', [EvaluationController::class, 'show']);
+        Route::get('evaluations', [EvaluationController::class, 'index']);
     });
 });
 
