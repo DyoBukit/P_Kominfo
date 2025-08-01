@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Route;
 
 // Import Controllers
 use App\Http\Controllers\Api\Admin\Auth\LoginController as AdminLoginController;
-use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\Admin\FormController;
 use App\Http\Controllers\Api\EvaluationController;
@@ -28,17 +27,22 @@ Route::prefix('admin')->name('admin.')->group(function() {
     Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::post('logout', [AdminLoginController::class, 'logout']);
         Route::apiResource('users', AdminUserController::class);
+        
         // Form & Question Management
         Route::apiResource('forms', FormController::class);
         Route::post('forms/{form}/questions', [FormController::class, 'addQuestion']);
         Route::put('questions/{question}', [FormController::class, 'updateQuestion']);
         Route::delete('questions/{question}', [FormController::class, 'removeQuestion']);
+
+        // RUTE BARU UNTUK TOGGLE is_active
         Route::patch('forms/{form}/toggle-active', [FormController::class, 'toggleIsActive']);
-        // Evaluation Export
+        
+        // Evaluation Management & Export
         Route::get('evaluations/export', [EvaluationController::class, 'export']);
-        Route::get('evaluations', [EvaluationController::class, 'index']);
+        Route::apiResource('evaluations', EvaluationController::class)->except(['create', 'edit', 'store']);
+        
     });
-});
+}); 
 
 // === RUTE UNTUK USER BIASA (OPD) ===
 Route::middleware('auth:sanctum')->group(function () {

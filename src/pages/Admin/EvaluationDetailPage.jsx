@@ -15,14 +15,11 @@ function EvaluationDetailPage() {
 
   useEffect(() => {
     const fetchEvaluationDetails = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        setLoading(true);
-        setError(null);
-
-        // --- PERBAIKAN UTAMA DI SINI ---
-        // 1. Ganti 'evaluations' menjadi 'evaluasi'
-        // 2. Ganti '{evaluation}' dengan id dinamis dari useParams()
-        const response = await api.get(`/admin/evaluations/export`);
+        // PERBAIKAN: Memanggil endpoint yang benar untuk detail evaluasi
+        const response = await api.get(`/admin/evaluations/${id}`);
         setEvaluation(response.data);
       } catch (err) {
         console.error("Gagal mengambil detail evaluasi:", err.response ? err.response.data : err.message);
@@ -31,12 +28,15 @@ function EvaluationDetailPage() {
         setLoading(false);
       }
     };
-
-    fetchEvaluationDetails();
+    
+    // Panggil fungsi hanya jika ID tersedia
+    if (id) {
+      fetchEvaluationDetails();
+    }
   }, [id]); // Panggil ulang jika ID berubah
 
   const handleGoBack = () => {
-    navigate('/admin/forms'); // Kembali ke tabel formulir evaluasi
+    navigate('/admin/evaluations'); // Kembali ke tabel formulir evaluasi
   };
 
   if (loading) {
@@ -68,7 +68,7 @@ function EvaluationDetailPage() {
         <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}><div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div></div>
         <div className="relative z-10 text-white text-xl">Evaluasi tidak ditemukan.</div>
         <button onClick={handleGoBack} className="mt-4 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition">
-          Kembali ke Daftar Formulir
+          Kembali ke Hasil Evaluasi
         </button>
       </div>
     );

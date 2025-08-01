@@ -1,5 +1,5 @@
 // src/pages/Admin/ManageUsersPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from '../../components/Navbar';
 import UserTable from './UserTable'; 
 import InputField from '../../components/InputField'; 
@@ -12,7 +12,9 @@ import backgroundImage from '../../assets/bg.png';
 function ManageUsersPage() {
   const navigate = useNavigate(); 
 
-  const [users, setUsers] = useState([]); 
+  const [users, setUsers] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1); // Tambahkan state untuk halaman saat ini
+  const [lastPage, setLastPage] = useState(1); // Tambahkan state untuk total halaman
   const [newUsername, setNewUsername] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -35,31 +37,37 @@ function ManageUsersPage() {
     setFormError('');
   };
 
-  const fetchUsers = async () => {
+  // Gunakan useCallback untuk fetchUsers agar tidak memicu useEffect berulang kali
+  const fetchUsers = useCallback(async (page = 1) => {
     setLoadingUsers(true);
     setFetchError(null);
     try {
-      const response = await api.get('/admin/users'); 
-      const usersData = Array.isArray(response.data.data) ? response.data.data : response.data;
+      // Panggil API dengan parameter halaman
+      const response = await api.get(`/admin/users?page=${page}`); 
+      // API Laravel paginate mengembalikan objek dengan properti 'data'
+      const usersData = response.data.data; 
       
       if (Array.isArray(usersData)) {
         setUsers(usersData);
+        setCurrentPage(response.data.current_page);
+        setLastPage(response.data.last_page);
       } else {
         console.error("Data pengguna yang diterima bukan array:", response.data);
-        setUsers([]); // Set ke array kosong untuk mencegah crash
+        setUsers([]); 
       }
-
     } catch (err) {
       console.error("Gagal mengambil data pengguna:", err.response ? err.response.data : err.message);
       setFetchError(`Gagal memuat pengguna: ${err.response?.data?.message || err.message || 'Server tidak merespons.'}`);
     } finally {
       setLoadingUsers(false);
     }
-  };
+  }, []); // Dependensi kosong karena tidak ada nilai dari luar yang digunakan
 
   useEffect(() => {
-    fetchUsers();
-  }, []); 
+    fetchUsers(currentPage);
+  }, [fetchUsers, currentPage]); 
+
+  // ... (kode handleEditUser, handleCancelEdit, handleSaveEditedUser, handleAddUser)
 
   const handleEditUser = (userToEdit) => {
     setEditingUser(userToEdit); 
@@ -116,7 +124,7 @@ function ManageUsersPage() {
       alert('Pengguna berhasil diperbarui!');
       setEditingUser(null); 
       resetFormFields(); 
-      fetchUsers(); 
+      fetchUsers(currentPage); // Muat ulang data untuk halaman saat ini
     } catch (err) {
       console.error("Gagal memperbarui pengguna:", err.response ? err.response.data : err.message);
       setFormError(`Gagal memperbarui pengguna: ${err.response?.data?.message || err.message || 'Server tidak merespons.'}`);
@@ -153,7 +161,7 @@ function ManageUsersPage() {
       });
 
       alert('Pengguna berhasil ditambahkan!');
-      fetchUsers(); 
+      fetchUsers(currentPage); // Muat ulang data untuk halaman saat ini
       resetFormFields(); 
     } catch (err) {
       console.error("Gagal menambahkan pengguna:", err.response ? err.response.data : err.message);
@@ -169,7 +177,7 @@ function ManageUsersPage() {
       const response = await api.delete(`/admin/users/${id}`); 
 
       alert('Pengguna berhasil dihapus!');
-      fetchUsers();
+      fetchUsers(currentPage); // Muat ulang data untuk halaman saat ini
     } catch (err) {
       console.error("Gagal menghapus pengguna:", err.response ? err.response.data : err.message);
       setFetchError(`Gagal menghapus pengguna: ${err.response?.data?.message || err.message || 'Server tidak merespons.'}`);
@@ -179,6 +187,13 @@ function ManageUsersPage() {
   const handleGoBack = () => {
     navigate('/admin/dashboard'); 
   };
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= lastPage) {
+        setCurrentPage(page);
+    }
+  };
+  
 
   return (
     <div className="relative min-h-screen w-full flex flex-col"> 
@@ -215,8 +230,7 @@ function ManageUsersPage() {
 
           {/* Form Add/Edit User */}
           <form onSubmit={editingUser ? handleSaveEditedUser : handleAddUser} 
-                className="bg-white/10 p-10 rounded-xl shadow-2xl mb-10 grid grid-cols-1 md:grid-cols-2 gap-6
-                           backdrop-blur-lg border border-white/20 text-gray-100" 
+            className="bg-white/10 p-10 rounded-xl shadow-2xl mb-10 grid grid-cols-1 md:grid-cols-2 gap-6 backdrop-blur-lg border border-white/20 text-gray-100" 
           >
             <h3 className="text-2xl font-bold text-white col-span-full mb-4 text-center">
               {editingUser ? 'Edit User' : 'Add New User'} 
@@ -254,7 +268,6 @@ function ManageUsersPage() {
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder={editingUser ? 'Biarkan kosong jika tidak diubah' : 'Set password'} 
             />
-            {/* Input Field untuk Konfirmasi Password */}
             <InputField
               label="Confirm Password" 
               type="password" 
@@ -289,7 +302,29 @@ function ManageUsersPage() {
           ) : fetchError ? (
             <ErrorMessage message={fetchError} />
           ) : (
-            <UserTable users={users} onDelete={handleDeleteUser} onEdit={handleEditUser} /> 
+            <>
+              <UserTable users={users} onDelete={handleDeleteUser} onEdit={handleEditUser} /> 
+              {/* Tambahkan UI Paginasi di sini */}
+              <div className="flex justify-center items-center mt-6 space-x-2 text-gray-100">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 rounded-lg border border-white/20 hover:bg-white/10 disabled:opacity-50 transition"
+                >
+                  Sebelumnya
+                </button>
+                <span className="px-4 py-2 bg-white/10 rounded-lg">
+                  Halaman {currentPage} dari {lastPage}
+                </span>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === lastPage}
+                  className="px-4 py-2 rounded-lg border border-white/20 hover:bg-white/10 disabled:opacity-50 transition"
+                >
+                  Berikutnya
+                </button>
+              </div>
+            </>
           )}
         </main>
       </div>

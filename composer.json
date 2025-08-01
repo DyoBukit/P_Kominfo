@@ -1,5 +1,6 @@
 {
     "require": {
-        "barryvdh/laravel-cors": "^3.0"
+        "barryvdh/laravel-cors": "^3.0",
+        "maatwebsite/excel": "^1.1"
     }
 }

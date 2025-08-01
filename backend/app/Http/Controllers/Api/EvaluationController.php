@@ -72,9 +72,23 @@ class EvaluationController extends Controller
     /**
      * Menampilkan semua hasil evaluasi (untuk Admin).
      */
-    public function index()
+    public function index(Request $request)
     {
-        $evaluations = Evaluation::with('user:id,name,username')->latest()->paginate(10);
+        $query = Evaluation::with('user:id,name,username,email')->latest(); // Muat relasi user
+
+        // LOGIKA PENCARIAN (SEARCH)
+        if ($search = $request->input('search')) {
+            $query->where('form_title', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('username', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                  });
+        }
+
+        $perPage = $request->input('per_page', 10); // Ambil per_page dari request, default 10
+        $evaluations = $query->paginate($perPage);
+
         return response()->json($evaluations);
     }
 
